@@ -1,0 +1,12 @@
+{
+    "NanoCpus":
+        1000000000,
+    "MemBytes":
+        1073741824,
+    "Network":
+        "all-spark-bridge",
+    "ClusterID":
+        "allspark-test-cluster",
+    "WorkerNodes":
+         2
+}

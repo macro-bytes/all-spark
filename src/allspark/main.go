@@ -18,12 +18,12 @@ func printDefaultUsage() {
 
 func handleCreateCluster(cloudEnvironment string, template string) {
 	client := cloud.Create(cloudEnvironment)
-	client.CreateCluster()
+	client.CreateCluster(template)
 }
 
 func handleDestroyCluster(clusterID string) {
 	client := cloud.Create("")
-	client.DestroyCluster()
+	client.DestroyCluster(clusterID)
 }
 
 func main() {

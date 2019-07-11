@@ -8,18 +8,18 @@ type AwsEnvironment struct {
 	instanceIDs *list.List
 }
 
-func (e *AwsEnvironment) CreateCluster() (string, error) {
+func (e *AwsEnvironment) CreateCluster(configPath string) error {
 	if e.instanceIDs == nil {
 		e.instanceIDs = list.New()
 	}
 
-	return "aws", nil
-}
-
-func (e *AwsEnvironment) DestroyCluster() error {
 	return nil
 }
 
-func (e *AwsEnvironment) save() error {
+func (e *AwsEnvironment) DestroyCluster(identifier string) error {
 	return nil
+}
+
+func (e *AwsEnvironment) getClusterNodes(identifier string) ([]string, error) {
+	return []string{}, nil
 }
