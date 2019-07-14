@@ -49,7 +49,7 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) error {
 	masterURL := "MASTER_URL=spark://" + masterIP + ":" + SPARK_PORT
 	log.Println("spark master URL is: " + masterURL)
 
-	if netutil.IsListeningOnPort(masterIP, SPARK_PORT, 30*time.Second) {
+	if netutil.IsListeningOnPort(masterIP, SPARK_PORT, 30*time.Second, 120) {
 		env := []string{"MASTER_URL=spark://" + masterIP + ":" + SPARK_PORT}
 		for i := 1; i <= dockerTemplate.WorkerNodes; i++ {
 			identifier := baseIdentifier + WORKER_IDENTIFIER + strconv.Itoa(i)

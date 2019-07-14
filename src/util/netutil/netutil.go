@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func IsListeningOnPort(host string, port string, timeout time.Duration) bool {
-	retries := 3
+func IsListeningOnPort(host string, port string,
+	timeout time.Duration, retries int) bool {
 
 	for retries > 0 {
 		conn, err := net.DialTimeout("tcp",
@@ -20,7 +20,7 @@ func IsListeningOnPort(host string, port string, timeout time.Duration) bool {
 		}
 
 		retries--
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	return false

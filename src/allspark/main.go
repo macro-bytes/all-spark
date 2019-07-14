@@ -4,38 +4,48 @@ import (
 	"cloud"
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"time"
 )
 
 const (
-	CREATE_STACK  = "create-stack"
-	DESTROY_STACK = "destroy-stack"
+	CREATE_CLUSTER  = "create-cluster"
+	DESTROY_CLUSTER = "destroy-cluster"
 )
 
 func printDefaultUsage() {
-	fmt.Println("usage: allspark <create-stack|destroy-stack>")
+	fmt.Printf("usage: allspark <%s|%s>\n", CREATE_CLUSTER, DESTROY_CLUSTER)
 }
 
 func handleCreateCluster(cloudEnvironment string, template string) {
+	start := time.Now().Second()
+
 	client := cloud.Create(cloudEnvironment)
 	client.CreateCluster(template)
+
+	end := time.Now().Second()
+
+	log.Printf("cluster is online after %d seconds\n", (end - start))
 }
 
-func handleDestroyCluster(clusterID string) {
-	client := cloud.Create("")
+func handleDestroyCluster(clusterID string, cloudEnvironment string) {
+	client := cloud.Create(cloudEnvironment)
 	client.DestroyCluster(clusterID)
 }
 
 func main() {
-	createStack := flag.NewFlagSet("create-cluster", flag.ExitOnError)
-	cloudEnvironment := createStack.String("cloud_environment", "aws",
-		"Cloud environment; options include aws and azure")
-	template := createStack.String("template", "",
+	createCluster := flag.NewFlagSet("create-cluster", flag.ExitOnError)
+	createCloudEnvironment := createCluster.String("cloud-environment", "",
+		"Cloud environment; options include docker, aws, azure")
+	template := createCluster.String("template", "",
 		"/path/to/deployment-template")
 
-	destroyStack := flag.NewFlagSet("destroy-cluster", flag.ExitOnError)
-	clusterID := destroyStack.String("cluster-id", "",
+	destroyCluster := flag.NewFlagSet("destroy-cluster", flag.ExitOnError)
+	clusterID := destroyCluster.String("cluster-id", "",
 		"ID of stack to be destroyed")
+	destroyCloudEnvironment := destroyCluster.String("cloud-environment", "",
+		"Cloud environment; options include docker, aws, azure")
 
 	if len(os.Args) <= 1 {
 		printDefaultUsage()
@@ -43,12 +53,22 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case CREATE_STACK:
-		createStack.Parse(os.Args[2:])
-		handleCreateCluster(*cloudEnvironment, *template)
-	case DESTROY_STACK:
-		destroyStack.Parse(os.Args[2:])
-		handleDestroyCluster(*clusterID)
+	case CREATE_CLUSTER:
+		createCluster.Parse(os.Args[2:])
+		if len(*createCloudEnvironment) == 0 ||
+			len(*template) == 0 {
+			createCluster.Usage()
+			os.Exit(1)
+		}
+		handleCreateCluster(*createCloudEnvironment, *template)
+	case DESTROY_CLUSTER:
+		destroyCluster.Parse(os.Args[2:])
+		if len(*clusterID) == 0 ||
+			len(*destroyCloudEnvironment) == 0 {
+			destroyCluster.Usage()
+			os.Exit(1)
+		}
+		handleDestroyCluster(*clusterID, *destroyCloudEnvironment)
 	default:
 		printDefaultUsage()
 		os.Exit(1)
