@@ -1,5 +1,10 @@
 package cloud
 
+import (
+	"strconv"
+	"time"
+)
+
 const (
 	AWS               = "aws"
 	AZURE             = "azure"
@@ -11,9 +16,13 @@ const (
 )
 
 type Environment interface {
-	CreateCluster(configPath string) error
+	CreateCluster(templatePath string) error
 	DestroyCluster(identifier string) error
 	getClusterNodes(identifier string) ([]string, error)
+}
+
+func buildBaseIdentifier(identifier string) string {
+	return identifier + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 }
 
 func Create(environment string) Environment {

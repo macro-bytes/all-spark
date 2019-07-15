@@ -1,0 +1,16 @@
+{
+    "ClusterID":
+        "",
+    "ImageId":
+        "",
+    "InstanceType":
+        "",
+    "EBSVolumeSize":
+        1,
+    "SubnetId":
+        "",
+    "SecurityGroupIds":
+        [],
+    "WorkerNodes":
+        1
+}

@@ -35,8 +35,7 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) error {
 		log.Fatal(err)
 	}
 
-	baseIdentifier := dockerTemplate.ClusterID +
-		"-" + strconv.FormatInt(time.Now().Unix(), 10)
+	baseIdentifier := buildBaseIdentifier(dockerTemplate.ClusterID)
 
 	containerID, err := e.createSparkNode(dockerTemplate,
 		baseIdentifier+MASTER_IDENTIFIER, []string{})

@@ -2,6 +2,13 @@ FROM alpine:latest
 
 ADD run /spark/run
 
+ENV SPARK_WORKER_PORT=7078
+
+EXPOSE 7077
+EXPOSE 7078
+EXPOSE 8080
+EXPOSE 8081
+
 RUN  apk update && \
     apk add wget && \
     apk add bash && \
