@@ -48,13 +48,13 @@ func handleDestroyCluster(options *flag.FlagSet,
 }
 
 func main() {
-	createCluster := flag.NewFlagSet("create-cluster", flag.ExitOnError)
+	createCluster := flag.NewFlagSet(CREATE_CLUSTER, flag.ExitOnError)
 	createCloudEnvironment := createCluster.String("cloud-environment", "",
 		"Cloud environment; options include docker, aws, azure")
 	createTemplate := createCluster.String("template", "",
 		"/path/to/deployment-template")
 
-	destroyCluster := flag.NewFlagSet("destroy-cluster", flag.ExitOnError)
+	destroyCluster := flag.NewFlagSet(DESTROY_CLUSTER, flag.ExitOnError)
 	destroyCloudEnvironment := destroyCluster.String("cloud-environment", "",
 		"Cloud environment; options include docker, aws, azure")
 	destroyTemplate := destroyCluster.String("template", "",
