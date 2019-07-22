@@ -33,12 +33,12 @@ func TestCreateDockerCluster(t *testing.T) {
 }
 
 func TestDestroyDockerCluster(t *testing.T) {
+	templatePath := "../../sample_templates/docker.json"
 	var template template.DockerTemplate
-	template_reader.Deserialize("../../sample_templates/docker.json",
-		&template)
+	template_reader.Deserialize(templatePath, &template)
 
 	cloud := Create(DOCKER)
-	cloud.DestroyCluster(template.ClusterID)
+	cloud.DestroyCluster(templatePath)
 
 	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)
 	if err != nil {

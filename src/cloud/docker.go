@@ -20,7 +20,7 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	cli.NegotiateAPIVersion(ctx)
 	return cli
@@ -64,7 +64,14 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) error {
 	return nil
 }
 
-func (e *DockerEnvironment) DestroyCluster(identifier string) error {
+func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
+	var dockerTemplate template.DockerTemplate
+	err := template_reader.Deserialize(templatePath, &dockerTemplate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	identifier := dockerTemplate.ClusterID
 	cli := e.getDockerClient()
 	defer cli.Close()
 

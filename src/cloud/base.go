@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"log"
 	"strconv"
 	"time"
 )
@@ -17,7 +18,7 @@ const (
 
 type Environment interface {
 	CreateCluster(templatePath string) error
-	DestroyCluster(identifier string) error
+	DestroyCluster(templatePath string) error
 	getClusterNodes(identifier string) ([]string, error)
 }
 
@@ -34,6 +35,8 @@ func Create(environment string) Environment {
 	case DOCKER:
 		return &DockerEnvironment{}
 	default:
-		panic("invalid cloud-environment " + environment)
+		log.Fatal("invalid cloud-environment " + environment)
 	}
+
+	return nil
 }

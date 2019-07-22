@@ -129,7 +129,15 @@ func (e *AwsEnvironment) CreateCluster(templatePath string) error {
 	return err
 }
 
-func (e *AwsEnvironment) DestroyCluster(identifier string) error {
+func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
+	var awsTemplate template.AwsTemplate
+	err := template_reader.Deserialize(templatePath, &awsTemplate)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	identifier := awsTemplate.ClusterID
+
 	cli := e.getEc2Client()
 	instances, err := e.getClusterNodes(identifier)
 	if err != nil {
