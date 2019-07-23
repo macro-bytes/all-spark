@@ -13,7 +13,7 @@ func TestCreateDockerCluster(t *testing.T) {
 		&template)
 	cloud := Create(DOCKER)
 
-	err := cloud.CreateCluster("../../sample_templates/docker.json")
+	webUrl, err := cloud.CreateCluster("../../sample_templates/docker.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,6 +29,11 @@ func TestCreateDockerCluster(t *testing.T) {
 	if expectedNodeCount != actualNodeCount {
 		t.Error("- expected " + strconv.Itoa(expectedNodeCount) + " spark nodes.")
 		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
+	}
+
+	err = waitForCluster(webUrl, template.WorkerNodes, 20)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

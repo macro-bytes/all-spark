@@ -112,7 +112,7 @@ func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
 		tags)
 }
 
-func (e *AwsEnvironment) CreateCluster(templatePath string) error {
+func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	var awsTemplate template.AwsTemplate
 	err := template_reader.Deserialize(templatePath, &awsTemplate)
 	if err != nil {
@@ -120,13 +120,14 @@ func (e *AwsEnvironment) CreateCluster(templatePath string) error {
 	}
 
 	baseIdentifier := buildBaseIdentifier(awsTemplate.ClusterID)
-	masterUrl, err := e.launchMaster(awsTemplate, baseIdentifier)
+	masterIp, err := e.launchMaster(awsTemplate, baseIdentifier)
 	if err != nil {
-		return err
+		return "", err
 	}
-	_, err = e.launchWorkers(awsTemplate, baseIdentifier, masterUrl)
+	_, err = e.launchWorkers(awsTemplate, baseIdentifier, masterIp)
 
-	return err
+	webUrl := "http://" + masterIp + ":8080"
+	return webUrl, err
 }
 
 func (e *AwsEnvironment) DestroyCluster(templatePath string) error {

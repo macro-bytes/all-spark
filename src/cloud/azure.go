@@ -2,8 +2,8 @@ package cloud
 
 type AzureEnvironment struct{}
 
-func (e *AzureEnvironment) CreateCluster(configPath string) error {
-	return nil
+func (e *AzureEnvironment) CreateCluster(configPath string) (string, error) {
+	return "", nil
 }
 
 func (e *AzureEnvironment) DestroyCluster(identifier string) error {

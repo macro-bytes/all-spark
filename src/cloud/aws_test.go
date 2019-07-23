@@ -13,7 +13,7 @@ func TestCreateAwsCluster(t *testing.T) {
 		&template)
 
 	cloud := Create(AWS)
-	err := cloud.CreateCluster("../../sample_templates/aws.json")
+	_, err := cloud.CreateCluster("../../sample_templates/aws.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,6 +32,13 @@ func TestCreateAwsCluster(t *testing.T) {
 		t.Error("- got " + strconv.FormatInt(actualNodeCount, 10) +
 			" spark nodes.")
 	}
+
+	/*
+		err = waitForCluster(webUrl, int(template.WorkerNodes), 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+	*/
 }
 
 func TestDestroyAwsCluster(t *testing.T) {

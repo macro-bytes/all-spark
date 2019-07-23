@@ -17,6 +17,8 @@ RUN  apk update && \
     apk add openjdk8 && \
     apk add python && \
     apk add python3 && \
+    apk add curl && \
+    apk add html2text && \
     cd /spark && \
     wget https://www-us.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz && \
     tar -xf spark-2.4.3-bin-hadoop2.7.tgz && \

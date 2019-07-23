@@ -28,7 +28,7 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 
 type DockerEnvironment struct{}
 
-func (e *DockerEnvironment) CreateCluster(templatePath string) error {
+func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	var dockerTemplate template.DockerTemplate
 	err := template_reader.Deserialize(templatePath, &dockerTemplate)
 	if err != nil {
@@ -49,7 +49,7 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) error {
 	log.Println("spark master URL is: " + masterURL)
 
 	if netutil.IsListeningOnPort(masterIP, SPARK_PORT, 30*time.Second, 120) {
-		env := []string{"MASTER_URL=spark://" + masterIP + ":" + SPARK_PORT}
+		env := []string{masterURL}
 		for i := 1; i <= dockerTemplate.WorkerNodes; i++ {
 			identifier := baseIdentifier + WORKER_IDENTIFIER + strconv.Itoa(i)
 			log.Println("createing spark worker " + identifier)
@@ -59,9 +59,9 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) error {
 		log.Fatal("master node has failed to come online")
 	}
 
-	log.Println("spark cluster is online, and can be accessed via http://" +
-		masterIP + ":8080")
-	return nil
+	webUrl := "http://" + masterIP + ":8080"
+	log.Printf("spark cluster is online, and can be accessed via %s\n", webUrl)
+	return webUrl, nil
 }
 
 func (e *DockerEnvironment) DestroyCluster(templatePath string) error {

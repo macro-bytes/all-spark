@@ -4,7 +4,7 @@ export JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
 export SPARK_HOME="/spark/spark-2.4.3-bin-hadoop2.7"
 
 if [ -z $MASTER_URL ]; then
-    $SPARK_HOME/sbin/start-master.sh 
+    $SPARK_HOME/sbin/start-master.sh
 else
     $SPARK_HOME/sbin/start-slave.sh $MASTER_URL
 fi
