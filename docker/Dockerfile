@@ -1,5 +1,6 @@
 FROM alpine:latest
 
+ADD init /spark/init
 ADD run /spark/run
 
 ENV SPARK_WORKER_PORT=7078
@@ -23,6 +24,7 @@ RUN  apk update && \
     wget https://www-us.apache.org/dist/spark/spark-2.4.3/spark-2.4.3-bin-hadoop2.7.tgz && \
     tar -xf spark-2.4.3-bin-hadoop2.7.tgz && \
     rm spark-2.4.3-bin-hadoop2.7.tgz && \
-    chmod +x /spark/run
+    chmod +x /spark/init && \
+    chmod +x run
 
-ENTRYPOINT /spark/run
+ENTRYPOINT /spark/init

@@ -37,8 +37,9 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 
 	baseIdentifier := buildBaseIdentifier(dockerTemplate.ClusterID)
 
+	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(dockerTemplate.WorkerNodes)
 	containerID, err := e.createSparkNode(dockerTemplate,
-		baseIdentifier+MASTER_IDENTIFIER, []string{})
+		baseIdentifier+MASTER_IDENTIFIER, []string{expectedWorkers})
 
 	masterIP, err := e.getIpAddress(containerID, dockerTemplate.Network)
 	if err != nil {
