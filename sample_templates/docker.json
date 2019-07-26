@@ -8,5 +8,5 @@
     "ClusterID":
         "allspark-test-cluster",
     "WorkerNodes":
-         2
+         1
 }
