@@ -1,6 +1,16 @@
 #!/bin/bash
 
-function wait_for_cluster {
+function wait_for_spark_master {
+    while true; do
+        ALIVE_WORKERS=`nc -z $MASTER_IP 7077`
+        if [ "$?" == "0" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function wait_for_spark_cluster {
     while true; do
         ALIVE_WORKERS=`curl -s http://localhost:8080 | grep "Alive Workers" | html2text | awk '{ print $3 }'`
         if [ "$ALIVE_WORKERS" == "$EXPECTED_WORKERS" ]; then
@@ -15,12 +25,13 @@ function wait_for_cluster {
 JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
 SPARK_HOME="/spark/spark-2.4.3-bin-hadoop2.7"
 
-if [ -z $MASTER_URL ]; then
+if [ -z $MASTER_IP ]; then
     $SPARK_HOME/sbin/start-master.sh
-    wait_for_cluster
+    wait_for_spark_cluster
     /spark/run
 else
-    $SPARK_HOME/sbin/start-slave.sh $MASTER_URL
+    wait_for_spark_master
+    $SPARK_HOME/sbin/start-slave.sh "spark://$MASTER_IP:7077"
 fi
 
 while true; do

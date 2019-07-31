@@ -15,4 +15,6 @@ RUN apk add jq && \
     apk add py-pip && \
     wget -q https://s3.amazonaws.com/h2o-release/sparkling-water/rel-2.4/13/sparkling-water-2.4.13.zip && \
     unzip sparkling-water-2.4.13.zip && \
-    rm sparkling-water-2.4.13.zip
+    rm sparkling-water-2.4.13.zip && \
+    chmod +x /spark/run && \
+    chmod +x /spark/init

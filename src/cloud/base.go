@@ -18,7 +18,6 @@ const (
 	DOCKER            = "docker"
 	MASTER_IDENTIFIER = "-master"
 	WORKER_IDENTIFIER = "-worker-"
-	SPARK_BASE_IMAGE  = "macrobytes/spark-2.4-standalone:latest"
 	SPARK_PORT        = "7077"
 	ALIVE_WORKERS     = "Alive Workers:"
 )

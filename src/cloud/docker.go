@@ -40,17 +40,17 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(dockerTemplate.WorkerNodes)
 	containerID, err := e.createSparkNode(dockerTemplate,
 		baseIdentifier+MASTER_IDENTIFIER, []string{expectedWorkers})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	masterIP, err := e.getIpAddress(containerID, dockerTemplate.Network)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	masterURL := "MASTER_URL=spark://" + masterIP + ":" + SPARK_PORT
-	log.Println("spark master URL is: " + masterURL)
-
 	if netutil.IsListeningOnPort(masterIP, SPARK_PORT, 30*time.Second, 120) {
-		env := []string{masterURL}
+		env := []string{"MASTER_IP=" + masterIP}
 		for i := 1; i <= dockerTemplate.WorkerNodes; i++ {
 			identifier := baseIdentifier + WORKER_IDENTIFIER + strconv.Itoa(i)
 			log.Println("createing spark worker " + identifier)
@@ -133,7 +133,7 @@ func (e *DockerEnvironment) createSparkNode(dockerTemplate template.DockerTempla
 
 	resp, err := cli.ContainerCreate(context.Background(),
 		&container.Config{
-			Image: SPARK_BASE_IMAGE,
+			Image: dockerTemplate.Image,
 			Env:   envParams,
 		},
 		&container.HostConfig{

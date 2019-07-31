@@ -2,7 +2,7 @@
     "ClusterID":
         "aws-spark-cluster",
     "ImageId":
-        "ami-0ca2cd88970bac268",
+        "ami-0bc24377d828dc902",
     "InstanceType":
         "t3.small",
     "EBSVolumeSize":
@@ -13,5 +13,7 @@
         ["sg-0631aa19d85fd7c9b",
          "sg-0a359f2c2bd058070"],
     "WorkerNodes":
-        2
+        2,
+    "Region":
+        "us-west-2"
 }

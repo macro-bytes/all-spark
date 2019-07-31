@@ -8,5 +8,7 @@
     "ClusterID":
         "allspark-test-cluster",
     "WorkerNodes":
-         1
+         1,
+    "Image":
+        "macrobytes/spark-2.4-standalone:latest"
 }

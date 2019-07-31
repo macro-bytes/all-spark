@@ -25,6 +25,6 @@ RUN  apk update && \
     tar -xf spark-2.4.3-bin-hadoop2.7.tgz && \
     rm spark-2.4.3-bin-hadoop2.7.tgz && \
     chmod +x /spark/init && \
-    chmod +x run
+    chmod +x /spark/run
 
 ENTRYPOINT /spark/init

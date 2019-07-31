@@ -8,4 +8,5 @@ type AwsTemplate struct {
 	SubnetId         string
 	SecurityGroupIds []string
 	WorkerNodes      int64
+	Region           string
 }

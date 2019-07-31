@@ -6,4 +6,5 @@ type DockerTemplate struct {
 	Network     string
 	ClusterID   string
 	WorkerNodes int
+	Image       string
 }

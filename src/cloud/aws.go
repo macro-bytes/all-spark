@@ -2,8 +2,11 @@ package cloud
 
 import (
 	"log"
+	"strconv"
 	"template"
 	"util/template_reader"
+
+	b64 "encoding/base64"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,7 +19,7 @@ type AwsEnvironment struct {
 
 func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2")},
+		Region: aws.String(e.region)},
 	)
 
 	if err != nil {
@@ -27,9 +30,11 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 }
 
 func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
-	identifier string, instanceCount int64, tags []*ec2.Tag) (*ec2.Reservation, error) {
+	identifier string, instanceCount int64, userData string) (*ec2.Reservation, error) {
 
 	cli := e.getEc2Client()
+
+	encodedUserData := b64.StdEncoding.EncodeToString([]byte(userData))
 
 	resp, err := cli.RunInstances(&ec2.RunInstancesInput{
 		ImageId:          aws.String(template.ImageId),
@@ -38,6 +43,7 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 		MaxCount:         aws.Int64(instanceCount),
 		SecurityGroupIds: aws.StringSlice(template.SecurityGroupIds),
 		SubnetId:         aws.String(template.SubnetId),
+		UserData:         aws.String(encodedUserData),
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
 				DeviceName: aws.String("/dev/xvda"),
@@ -76,15 +82,11 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
 	baseIdentifier string) (string, error) {
 
-	tags := []*ec2.Tag{
-		{
-			Key:   aws.String("Name"),
-			Value: aws.String(baseIdentifier + MASTER_IDENTIFIER),
-		},
-	}
+	userData := "export EXPECTED_WORKERS=" +
+		strconv.FormatInt(template.WorkerNodes, 10)
 
 	res, err := e.launchInstances(template, baseIdentifier+MASTER_IDENTIFIER,
-		1, tags)
+		1, userData)
 	if err != nil {
 		return "", err
 	}
@@ -95,21 +97,12 @@ func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
 func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
 	baseIdentifier string, masterIP string) (*ec2.Reservation, error) {
 
-	tags := []*ec2.Tag{
-		{
-			Key:   aws.String("Name"),
-			Value: aws.String(baseIdentifier + WORKER_IDENTIFIER),
-		},
-		{
-			Key:   aws.String("MasterNodeIP"),
-			Value: aws.String(masterIP),
-		},
-	}
+	userData := "export MASTER_IP=" + masterIP
 
 	return e.launchInstances(template,
-		baseIdentifier+MASTER_IDENTIFIER,
+		baseIdentifier+WORKER_IDENTIFIER,
 		template.WorkerNodes,
-		tags)
+		userData)
 }
 
 func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
@@ -118,6 +111,7 @@ func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	e.region = awsTemplate.Region
 
 	baseIdentifier := buildBaseIdentifier(awsTemplate.ClusterID)
 	masterIp, err := e.launchMaster(awsTemplate, baseIdentifier)
@@ -136,6 +130,7 @@ func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	e.region = awsTemplate.Region
 
 	identifier := awsTemplate.ClusterID
 
