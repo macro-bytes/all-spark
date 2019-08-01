@@ -22,7 +22,7 @@ function wait_for_spark_cluster {
     done
 }
 
-JAVA_HOME="/usr/lib/jvm/java-1.8-openjdk"
+JAVA_HOME="/usr/lib/jvm/java-1.8.0-openjdk-amd64"
 SPARK_HOME="/spark/spark-2.4.3-bin-hadoop2.7"
 
 if [ -z $MASTER_IP ]; then
