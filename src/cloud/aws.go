@@ -46,7 +46,7 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 		UserData:         aws.String(encodedUserData),
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
-				DeviceName: aws.String("/dev/xvda"),
+				DeviceName: aws.String("/dev/sda1"),
 				Ebs: &ec2.EbsBlockDevice{
 					Encrypted:  aws.Bool(true),
 					VolumeSize: aws.Int64(template.EBSVolumeSize),
@@ -82,8 +82,8 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
 	baseIdentifier string) (string, error) {
 
-	userData := "export EXPECTED_WORKERS=" +
-		strconv.FormatInt(template.WorkerNodes, 10)
+	workers := strconv.FormatInt(template.WorkerNodes, 10)
+	userData := "export EXPECTED_WORKERS=" + workers
 
 	res, err := e.launchInstances(template, baseIdentifier+MASTER_IDENTIFIER,
 		1, userData)
