@@ -9,4 +9,5 @@ type AwsTemplate struct {
 	SecurityGroupIds []string
 	WorkerNodes      int64
 	Region           string
+	IAMRole          string
 }

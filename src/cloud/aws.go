@@ -44,6 +44,10 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 		SecurityGroupIds: aws.StringSlice(template.SecurityGroupIds),
 		SubnetId:         aws.String(template.SubnetId),
 		UserData:         aws.String(encodedUserData),
+		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
+			Name: aws.String(template.IAMRole),
+		},
+
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
 				DeviceName: aws.String("/dev/sda1"),

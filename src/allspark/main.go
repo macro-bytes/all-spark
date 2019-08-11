@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 )
 
 const (
@@ -30,14 +29,12 @@ func handleErrors(options *flag.FlagSet,
 func handleCreateCluster(options *flag.FlagSet,
 	cloudEnvironment string, templatePath string) {
 	handleErrors(options, cloudEnvironment, templatePath)
-	start := time.Now().Second()
 
 	client := cloud.Create(cloudEnvironment)
-	client.CreateCluster(templatePath)
-
-	end := time.Now().Second()
-
-	log.Printf("cluster is online after %d seconds\n", (end - start))
+	_, err := client.CreateCluster(templatePath)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func handleDestroyCluster(options *flag.FlagSet,
