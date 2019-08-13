@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 const (
@@ -30,11 +31,18 @@ func handleCreateCluster(options *flag.FlagSet,
 	cloudEnvironment string, templatePath string) {
 	handleErrors(options, cloudEnvironment, templatePath)
 
+	log.Printf("Launching spark cluster (note: this may take approximately 45 seconds).")
+	start := time.Now().Unix()
+
 	client := cloud.Create(cloudEnvironment)
-	_, err := client.CreateCluster(templatePath)
+	url, err := client.CreateCluster(templatePath)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	end := time.Now().Unix()
+	log.Printf("Cluster is online after %v seconds\n", (end - start))
+	log.Printf("Master URL: " + url)
 }
 
 func handleDestroyCluster(options *flag.FlagSet,

@@ -18,7 +18,7 @@ const (
 	DOCKER            = "docker"
 	MASTER_IDENTIFIER = "-master"
 	WORKER_IDENTIFIER = "-worker-"
-	SPARK_PORT        = "7077"
+	SPARK_PORT        = 7077
 	ALIVE_WORKERS     = "Alive Workers:"
 )
 

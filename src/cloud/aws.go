@@ -1,12 +1,13 @@
 package cloud
 
 import (
+	b64 "encoding/base64"
 	"log"
 	"strconv"
 	"template"
+	"time"
+	"util/netutil"
 	"util/template_reader"
-
-	b64 "encoding/base64"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -83,8 +84,30 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 	return resp, nil
 }
 
+func (e *AwsEnvironment) getPublicIp(instanceId string) (string, error) {
+	cli := e.getEc2Client()
+
+	cli.WaitUntilInstanceRunning(
+		&ec2.DescribeInstancesInput{
+			InstanceIds: aws.StringSlice([]string{instanceId}),
+		},
+	)
+
+	response, err := cli.DescribeInstances(
+		&ec2.DescribeInstancesInput{
+			InstanceIds: aws.StringSlice([]string{instanceId}),
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return *response.Reservations[0].Instances[0].PublicIpAddress, nil
+}
+
 func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
-	baseIdentifier string) (string, error) {
+	baseIdentifier string) (string, string, error) {
 
 	workers := strconv.FormatInt(template.WorkerNodes, 10)
 	userData := "export EXPECTED_WORKERS=" + workers
@@ -92,10 +115,12 @@ func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
 	res, err := e.launchInstances(template, baseIdentifier+MASTER_IDENTIFIER,
 		1, userData)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return *res.Instances[0].PrivateIpAddress, err
+	privateIp := *res.Instances[0].PrivateIpAddress
+
+	return *res.Instances[0].InstanceId, privateIp, err
 }
 
 func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
@@ -118,13 +143,22 @@ func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	e.region = awsTemplate.Region
 
 	baseIdentifier := buildBaseIdentifier(awsTemplate.ClusterID)
-	masterIp, err := e.launchMaster(awsTemplate, baseIdentifier)
+	instanceId, privateIp, err := e.launchMaster(awsTemplate, baseIdentifier)
 	if err != nil {
 		return "", err
 	}
-	_, err = e.launchWorkers(awsTemplate, baseIdentifier, masterIp)
+	_, err = e.launchWorkers(awsTemplate, baseIdentifier, privateIp)
 
-	webUrl := "http://" + masterIp + ":8080"
+	publicIp, err := e.getPublicIp(instanceId)
+	if err != nil {
+		return "", err
+	}
+
+	if netutil.IsListeningOnPort(publicIp, 8080, 1*time.Second, 60) {
+		log.Println("spark master node is online")
+	}
+
+	webUrl := "http://" + publicIp + ":8080"
 	return webUrl, err
 }
 

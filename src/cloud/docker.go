@@ -53,7 +53,6 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 		env := []string{"MASTER_IP=" + masterIP}
 		for i := 1; i <= dockerTemplate.WorkerNodes; i++ {
 			identifier := baseIdentifier + WORKER_IDENTIFIER + strconv.Itoa(i)
-			log.Println("createing spark worker " + identifier)
 			e.createSparkNode(dockerTemplate, identifier, env)
 		}
 	} else {
@@ -61,7 +60,6 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	}
 
 	webUrl := "http://" + masterIP + ":8080"
-	log.Printf("spark cluster is online, and can be accessed via %s\n", webUrl)
 	return webUrl, nil
 }
 
