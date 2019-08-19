@@ -134,14 +134,8 @@ func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
 		userData)
 }
 
-func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
-	var awsTemplate template.AwsTemplate
-	err := template_reader.Deserialize(templatePath, &awsTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
+func (e *AwsEnvironment) CreateClusterHelper(awsTemplate template.AwsTemplate) (string, error) {
 	e.region = awsTemplate.Region
-
 	baseIdentifier := buildBaseIdentifier(awsTemplate.ClusterID)
 	instanceId, privateIp, err := e.launchMaster(awsTemplate, baseIdentifier)
 	if err != nil {
@@ -162,12 +156,16 @@ func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	return webUrl, err
 }
 
-func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
+func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	var awsTemplate template.AwsTemplate
 	err := template_reader.Deserialize(templatePath, &awsTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return e.CreateClusterHelper(awsTemplate)
+}
+
+func (e *AwsEnvironment) DestroyClusterHelper(awsTemplate template.AwsTemplate) error {
 	e.region = awsTemplate.Region
 
 	identifier := awsTemplate.ClusterID
@@ -184,6 +182,15 @@ func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
 		},
 	)
 	return err
+}
+
+func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
+	var awsTemplate template.AwsTemplate
+	err := template_reader.Deserialize(templatePath, &awsTemplate)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return e.DestroyClusterHelper(awsTemplate)
 }
 
 func (e *AwsEnvironment) getClusterNodes(identifier string) ([]string, error) {

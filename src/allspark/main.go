@@ -1,3 +1,5 @@
+// +build !lambda
+
 package main
 
 import (
@@ -7,11 +9,6 @@ import (
 	"log"
 	"os"
 	"time"
-)
-
-const (
-	CREATE_CLUSTER  = "create-cluster"
-	DESTROY_CLUSTER = "destroy-cluster"
 )
 
 func printDefaultUsage() {

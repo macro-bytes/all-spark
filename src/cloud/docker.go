@@ -28,13 +28,7 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 
 type DockerEnvironment struct{}
 
-func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
-	var dockerTemplate template.DockerTemplate
-	err := template_reader.Deserialize(templatePath, &dockerTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func (e *DockerEnvironment) CreateClusterHelper(dockerTemplate template.DockerTemplate) (string, error) {
 	baseIdentifier := buildBaseIdentifier(dockerTemplate.ClusterID)
 
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(dockerTemplate.WorkerNodes)
@@ -63,13 +57,18 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	return webUrl, nil
 }
 
-func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
+func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	var dockerTemplate template.DockerTemplate
 	err := template_reader.Deserialize(templatePath, &dockerTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	return e.CreateClusterHelper(dockerTemplate)
+
+}
+
+func (e *DockerEnvironment) DestroyClusterHelper(dockerTemplate template.DockerTemplate) error {
 	identifier := dockerTemplate.ClusterID
 	cli := e.getDockerClient()
 	defer cli.Close()
@@ -87,6 +86,15 @@ func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
 		}
 	}
 	return nil
+}
+
+func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
+	var dockerTemplate template.DockerTemplate
+	err := template_reader.Deserialize(templatePath, &dockerTemplate)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return e.DestroyClusterHelper(dockerTemplate)
 }
 
 func (e *DockerEnvironment) getClusterNodes(identifier string) ([]string, error) {
