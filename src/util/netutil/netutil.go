@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// IsListeningOnPort - determines if a host is listening on the specified port
 func IsListeningOnPort(host string, port int,
 	timeout time.Duration, retries int) bool {
 

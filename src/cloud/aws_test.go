@@ -12,7 +12,7 @@ func TestCreateAwsCluster(t *testing.T) {
 	template_reader.Deserialize("../../sample_templates/aws.json",
 		&template)
 
-	cloud := Create(AWS)
+	cloud := Create(Aws)
 	_, err := cloud.CreateCluster("../../sample_templates/aws.json")
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +46,7 @@ func TestDestroyAwsCluster(t *testing.T) {
 	var template template.AwsTemplate
 	template_reader.Deserialize(templatePath, &template)
 
-	cloud := Create(AWS)
+	cloud := Create(Aws)
 	cloud.DestroyCluster(templatePath)
 
 	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)

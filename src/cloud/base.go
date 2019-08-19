@@ -12,27 +12,32 @@ import (
 	strip "github.com/grokify/html-strip-tags-go"
 )
 
+// Supported cloud environments
 const (
-	AWS               = "aws"
-	AZURE             = "azure"
-	DOCKER            = "docker"
-	MASTER_IDENTIFIER = "-master"
-	WORKER_IDENTIFIER = "-worker-"
-	SPARK_PORT        = 7077
-	ALIVE_WORKERS     = "Alive Workers:"
+	Aws    = "aws"
+	Azure  = "azure"
+	Docker = "docker"
 )
 
+const (
+	masterIdentifier = "-master"
+	workerIdentifier = "-worker-"
+	sparkPort        = 7077
+	aliveWorkers     = "Alive Workers:"
+)
+
+// Environment base interface
 type Environment interface {
 	CreateCluster(templatePath string) (string, error)
 	DestroyCluster(templatePath string) error
 	getClusterNodes(identifier string) ([]string, error)
 }
 
-func waitForCluster(sparkWebUrl string, expectedWorkerCount int,
+func waitForCluster(sparkWebURL string, expectedWorkerCount int,
 	retryAttempts int) error {
 
 	for i := 0; i < retryAttempts; i++ {
-		workerCount, _ := getAliveWorkerCount(sparkWebUrl)
+		workerCount, _ := getAliveWorkerCount(sparkWebURL)
 		if workerCount == expectedWorkerCount {
 			return nil
 		}
@@ -42,8 +47,8 @@ func waitForCluster(sparkWebUrl string, expectedWorkerCount int,
 	return errors.New("Spark cluster failed to launch")
 }
 
-func getAliveWorkerCount(sparkWebUrl string) (int, error) {
-	resp, err := http.Get(sparkWebUrl)
+func getAliveWorkerCount(sparkWebURL string) (int, error) {
+	resp, err := http.Get(sparkWebURL)
 	if err == nil {
 		defer resp.Body.Close()
 
@@ -56,7 +61,7 @@ func getAliveWorkerCount(sparkWebUrl string) (int, error) {
 			"\n") {
 
 			buff := strings.TrimSpace(el)
-			if strings.Contains(buff, ALIVE_WORKERS) {
+			if strings.Contains(buff, aliveWorkers) {
 				workerLine := strings.Split(buff, ": ")
 				count, err := strconv.Atoi(strings.TrimSpace(workerLine[1]))
 				if err != nil {
@@ -73,13 +78,14 @@ func buildBaseIdentifier(identifier string) string {
 	return identifier + "-" + strconv.FormatInt(time.Now().Unix(), 10)
 }
 
+// Create a cloud environment (e.g. AWS, Docker, Azure, etc..)
 func Create(environment string) Environment {
 	switch environment {
-	case AWS:
+	case Aws:
 		return &AwsEnvironment{}
-	case AZURE:
+	case Azure:
 		return &AzureEnvironment{}
-	case DOCKER:
+	case Docker:
 		return &DockerEnvironment{}
 	default:
 		log.Fatal("invalid cloud-environment " + environment)

@@ -12,7 +12,7 @@ import (
 )
 
 func printDefaultUsage() {
-	fmt.Printf("usage: allspark <%s|%s>\n", CREATE_CLUSTER, DESTROY_CLUSTER)
+	fmt.Printf("usage: allspark <%s|%s>\n", CreateCluster, DestroyCluster)
 }
 
 func handleErrors(options *flag.FlagSet,
@@ -50,13 +50,13 @@ func handleDestroyCluster(options *flag.FlagSet,
 }
 
 func main() {
-	createCluster := flag.NewFlagSet(CREATE_CLUSTER, flag.ExitOnError)
+	createCluster := flag.NewFlagSet(CreateCluster, flag.ExitOnError)
 	createCloudEnvironment := createCluster.String("cloud-environment", "",
 		"Cloud environment; options include docker, aws, azure")
 	createTemplate := createCluster.String("template", "",
 		"/path/to/deployment-template")
 
-	destroyCluster := flag.NewFlagSet(DESTROY_CLUSTER, flag.ExitOnError)
+	destroyCluster := flag.NewFlagSet(DestroyCluster, flag.ExitOnError)
 	destroyCloudEnvironment := destroyCluster.String("cloud-environment", "",
 		"Cloud environment; options include docker, aws, azure")
 	destroyTemplate := destroyCluster.String("template", "",
@@ -68,11 +68,11 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case CREATE_CLUSTER:
+	case CreateCluster:
 		createCluster.Parse(os.Args[2:])
 		handleCreateCluster(createCluster,
 			*createCloudEnvironment, *createTemplate)
-	case DESTROY_CLUSTER:
+	case DestroyCluster:
 		destroyCluster.Parse(os.Args[2:])
 		handleDestroyCluster(destroyCluster,
 			*destroyCloudEnvironment, *destroyTemplate)

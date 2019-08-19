@@ -26,37 +26,40 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 	return cli
 }
 
+// DockerEnvironment interface
 type DockerEnvironment struct{}
 
+// CreateClusterHelper - helper function for creating spark clusters
 func (e *DockerEnvironment) CreateClusterHelper(dockerTemplate template.DockerTemplate) (string, error) {
 	baseIdentifier := buildBaseIdentifier(dockerTemplate.ClusterID)
 
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(dockerTemplate.WorkerNodes)
 	containerID, err := e.createSparkNode(dockerTemplate,
-		baseIdentifier+MASTER_IDENTIFIER, []string{expectedWorkers})
+		baseIdentifier+masterIdentifier, []string{expectedWorkers})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	masterIP, err := e.getIpAddress(containerID, dockerTemplate.Network)
+	masterIP, err := e.getIPAddress(containerID, dockerTemplate.Network)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if netutil.IsListeningOnPort(masterIP, SPARK_PORT, 30*time.Second, 120) {
+	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
 		env := []string{"MASTER_IP=" + masterIP}
 		for i := 1; i <= dockerTemplate.WorkerNodes; i++ {
-			identifier := baseIdentifier + WORKER_IDENTIFIER + strconv.Itoa(i)
+			identifier := baseIdentifier + workerIdentifier + strconv.Itoa(i)
 			e.createSparkNode(dockerTemplate, identifier, env)
 		}
 	} else {
 		log.Fatal("master node has failed to come online")
 	}
 
-	webUrl := "http://" + masterIP + ":8080"
-	return webUrl, nil
+	webURL := "http://" + masterIP + ":8080"
+	return webURL, nil
 }
 
+// CreateCluster - creates spark clusters
 func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	var dockerTemplate template.DockerTemplate
 	err := template_reader.Deserialize(templatePath, &dockerTemplate)
@@ -68,6 +71,7 @@ func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 
 }
 
+// DestroyClusterHelper - helper function for destroying spark clusters
 func (e *DockerEnvironment) DestroyClusterHelper(dockerTemplate template.DockerTemplate) error {
 	identifier := dockerTemplate.ClusterID
 	cli := e.getDockerClient()
@@ -88,6 +92,7 @@ func (e *DockerEnvironment) DestroyClusterHelper(dockerTemplate template.DockerT
 	return nil
 }
 
+// DestroyCluster - destroys spark clusters
 func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
 	var dockerTemplate template.DockerTemplate
 	err := template_reader.Deserialize(templatePath, &dockerTemplate)
@@ -118,7 +123,7 @@ func (e *DockerEnvironment) getClusterNodes(identifier string) ([]string, error)
 	return result, nil
 }
 
-func (e *DockerEnvironment) getIpAddress(id string, network string) (string, error) {
+func (e *DockerEnvironment) getIPAddress(id string, network string) (string, error) {
 	cli := e.getDockerClient()
 	defer cli.Close()
 

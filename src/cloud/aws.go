@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+// AwsEnvironment interface
 type AwsEnvironment struct {
 	region string
 }
@@ -84,18 +85,18 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 	return resp, nil
 }
 
-func (e *AwsEnvironment) getPublicIp(instanceId string) (string, error) {
+func (e *AwsEnvironment) getPublicIP(instanceID string) (string, error) {
 	cli := e.getEc2Client()
 
 	cli.WaitUntilInstanceRunning(
 		&ec2.DescribeInstancesInput{
-			InstanceIds: aws.StringSlice([]string{instanceId}),
+			InstanceIds: aws.StringSlice([]string{instanceID}),
 		},
 	)
 
 	response, err := cli.DescribeInstances(
 		&ec2.DescribeInstancesInput{
-			InstanceIds: aws.StringSlice([]string{instanceId}),
+			InstanceIds: aws.StringSlice([]string{instanceID}),
 		},
 	)
 
@@ -112,15 +113,15 @@ func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
 	workers := strconv.FormatInt(template.WorkerNodes, 10)
 	userData := "export EXPECTED_WORKERS=" + workers
 
-	res, err := e.launchInstances(template, baseIdentifier+MASTER_IDENTIFIER,
+	res, err := e.launchInstances(template, baseIdentifier+masterIdentifier,
 		1, userData)
 	if err != nil {
 		return "", "", err
 	}
 
-	privateIp := *res.Instances[0].PrivateIpAddress
+	privateIP := *res.Instances[0].PrivateIpAddress
 
-	return *res.Instances[0].InstanceId, privateIp, err
+	return *res.Instances[0].InstanceId, privateIP, err
 }
 
 func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
@@ -129,33 +130,35 @@ func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
 	userData := "export MASTER_IP=" + masterIP
 
 	return e.launchInstances(template,
-		baseIdentifier+WORKER_IDENTIFIER,
+		baseIdentifier+workerIdentifier,
 		template.WorkerNodes,
 		userData)
 }
 
+// CreateClusterHelper - helper function for creating the spark cluster
 func (e *AwsEnvironment) CreateClusterHelper(awsTemplate template.AwsTemplate) (string, error) {
 	e.region = awsTemplate.Region
 	baseIdentifier := buildBaseIdentifier(awsTemplate.ClusterID)
-	instanceId, privateIp, err := e.launchMaster(awsTemplate, baseIdentifier)
+	instanceID, privateIP, err := e.launchMaster(awsTemplate, baseIdentifier)
 	if err != nil {
 		return "", err
 	}
-	_, err = e.launchWorkers(awsTemplate, baseIdentifier, privateIp)
+	_, err = e.launchWorkers(awsTemplate, baseIdentifier, privateIP)
 
-	publicIp, err := e.getPublicIp(instanceId)
+	publicIP, err := e.getPublicIP(instanceID)
 	if err != nil {
 		return "", err
 	}
 
-	if netutil.IsListeningOnPort(publicIp, 8080, 1*time.Second, 60) {
+	if netutil.IsListeningOnPort(publicIP, 8080, 1*time.Second, 60) {
 		log.Println("spark master node is online")
 	}
 
-	webUrl := "http://" + publicIp + ":8080"
-	return webUrl, err
+	webURL := "http://" + publicIP + ":8080"
+	return webURL, err
 }
 
+// CreateCluster - deserializes the supplied template and creates a spark cluster
 func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	var awsTemplate template.AwsTemplate
 	err := template_reader.Deserialize(templatePath, &awsTemplate)
@@ -165,6 +168,7 @@ func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	return e.CreateClusterHelper(awsTemplate)
 }
 
+// DestroyClusterHelper - helper function for destroying spark clusters
 func (e *AwsEnvironment) DestroyClusterHelper(awsTemplate template.AwsTemplate) error {
 	e.region = awsTemplate.Region
 
@@ -184,6 +188,7 @@ func (e *AwsEnvironment) DestroyClusterHelper(awsTemplate template.AwsTemplate) 
 	return err
 }
 
+// DestroyCluster - destroys the spark cluster
 func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
 	var awsTemplate template.AwsTemplate
 	err := template_reader.Deserialize(templatePath, &awsTemplate)

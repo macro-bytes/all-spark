@@ -25,10 +25,10 @@ func HandleRequest(ctx context.Context, action lambdaAction) lambdaResponse {
 
 	var err error = nil
 	switch action.command {
-	case CREATE_CLUSTER:
+	case CreateCluster:
 		_, err = client.CreateClusterHelper(action.params)
 		break
-	case DESTROY_CLUSTER:
+	case DestroyCluster:
 		err = client.DestroyClusterHelper(action.params)
 		break
 	default:

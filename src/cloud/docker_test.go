@@ -11,9 +11,9 @@ func TestCreateDockerCluster(t *testing.T) {
 	var template template.DockerTemplate
 	template_reader.Deserialize("../../sample_templates/docker.json",
 		&template)
-	cloud := Create(DOCKER)
+	cloud := Create(Docker)
 
-	webUrl, err := cloud.CreateCluster("../../sample_templates/docker.json")
+	webURL, err := cloud.CreateCluster("../../sample_templates/docker.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,7 +31,7 @@ func TestCreateDockerCluster(t *testing.T) {
 		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
 	}
 
-	err = waitForCluster(webUrl, template.WorkerNodes, 20)
+	err = waitForCluster(webURL, template.WorkerNodes, 20)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestDestroyDockerCluster(t *testing.T) {
 	var template template.DockerTemplate
 	template_reader.Deserialize(templatePath, &template)
 
-	cloud := Create(DOCKER)
+	cloud := Create(Docker)
 	cloud.DestroyCluster(templatePath)
 
 	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)

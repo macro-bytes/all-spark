@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// Deserialize - deserializes cloud creation templates
 func Deserialize(path string, destination interface{}) error {
 	template, err := os.Open(path)
 	if err != nil {
