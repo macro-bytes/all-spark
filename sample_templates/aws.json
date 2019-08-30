@@ -2,18 +2,22 @@
     "ClusterID":
         "aws-spark-cluster",
     "ImageId":
-        "ami-0cb577cfcebb003c9",
+        "ami-0a4348b9030e78616",
     "InstanceType":
-        "t3.small",
+        "m5.2xlarge",
     "EBSVolumeSize":
-        20,
+        10,
     "SubnetId":
         "subnet-0f05559509a1a7971",
     "SecurityGroupIds":
         ["sg-0631aa19d85fd7c9b",
          "sg-0a359f2c2bd058070"],
     "WorkerNodes":
-        1,
+        2,
     "Region":
-        "us-west-2"
+        "us-west-2",
+    "IAMRole":
+        "AmazonS3FullAccess",
+    "KeyName":
+        "wp-1"
 }

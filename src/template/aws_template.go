@@ -10,4 +10,5 @@ type AwsTemplate struct {
 	WorkerNodes      int64
 	Region           string
 	IAMRole          string
+	KeyName          string
 }

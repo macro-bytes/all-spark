@@ -46,6 +46,7 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 		SecurityGroupIds: aws.StringSlice(template.SecurityGroupIds),
 		SubnetId:         aws.String(template.SubnetId),
 		UserData:         aws.String(encodedUserData),
+		KeyName:          aws.String(template.KeyName),
 		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
 			Name: aws.String(template.IAMRole),
 		},
