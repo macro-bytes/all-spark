@@ -42,7 +42,7 @@ func createBadFormDataDocker() []byte {
 }
 
 func createValidFormDataDocker() []byte {
-	var template template.AwsTemplate
+	var template template.DockerTemplate
 	template_reader.Deserialize("../../sample_templates/docker.json",
 		&template)
 
@@ -92,4 +92,28 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 	testHTTPRequest(t, destroyClusterAws, "POST",
 		"/aws/destroyCluster",
 		bytes.NewReader(createValidFormDataAws()), http.StatusOK)
+}
+
+func TestCreateAndDestroyClusterDocker(t *testing.T) {
+	testHTTPRequest(t, createClusterDocker, "GET",
+		"/docker/createCluster", nil, http.StatusBadRequest)
+	testHTTPRequest(t, createClusterDocker, "POST",
+		"/docker/createCluster", nil, http.StatusBadRequest)
+	testHTTPRequest(t, createClusterDocker, "POST",
+		"/docker/createCluster",
+		bytes.NewReader(createBadFormDataDocker()), http.StatusBadRequest)
+	testHTTPRequest(t, createClusterDocker, "POST",
+		"/docker/createCluster",
+		bytes.NewReader(createValidFormDataDocker()), http.StatusOK)
+
+	testHTTPRequest(t, destroyClusterDocker, "GET",
+		"/docker/destroyCluster", nil, http.StatusBadRequest)
+	testHTTPRequest(t, destroyClusterDocker, "POST",
+		"/docker/destroyCluster", nil, http.StatusBadRequest)
+	testHTTPRequest(t, destroyClusterDocker, "POST",
+		"/docker/destroyCluster",
+		bytes.NewReader(createBadFormDataDocker()), http.StatusBadRequest)
+	testHTTPRequest(t, destroyClusterDocker, "POST",
+		"/docker/destroyCluster",
+		bytes.NewReader(createValidFormDataDocker()), http.StatusOK)
 }

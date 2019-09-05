@@ -55,11 +55,10 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("successfully launched cluster"))
-		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("successfully launched cluster"))
 }
 
 func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
@@ -93,11 +92,10 @@ func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("successfully destroyed cluster"))
-		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("successfully destroyed cluster"))
 }
 
 // InitAwsAPI - Initialize the AWS REST API
