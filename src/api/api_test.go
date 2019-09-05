@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"template"
 	"testing"
 	"util/template_reader"
@@ -116,4 +117,67 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 	testHTTPRequest(t, destroyClusterDocker, "POST",
 		"/docker/destroyCluster",
 		bytes.NewReader(createValidFormDataDocker()), http.StatusOK)
+}
+
+func TestDeserializeSparkApp(t *testing.T) {
+	buff := `{
+"id":"app-20190904193210-0000",
+"starttime":1567625530255,
+"name":"Sparkling Water Driver",
+"cores":16,
+"user":"root",
+"memoryperslave":1024,
+"submitdate":"Wed Sep 04 19:32:10 GMT 2019",
+"state":"RUNNING",
+"duration":71308
+}`
+
+	var test sparkApp
+	err := json.Unmarshal([]byte(buff), &test)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	serialized, err := json.Marshal(test)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := strings.ReplaceAll(buff, "\n", "")
+	if string(serialized) != expected {
+		t.Error("serialization/deserialization of sparkApp failed")
+	}
+}
+
+func TestDeserializeSparkWorker(t *testing.T) {
+	buff := `{
+"id":"worker-20190904193157-172.30.0.12-7078",
+"host":"172.30.0.12",
+"port":7078,
+"webuiaddress":"http://172.30.0.12:8081",
+"cores":8,
+"coresused":8,
+"coresfree":0,
+"memory":30348,
+"memoryused":1024,
+"memoryfree":29324,
+"state":"ALIVE",
+"lastheartbeat":1567625593257
+}`
+
+	var test sparkWorker
+	err := json.Unmarshal([]byte(buff), &test)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	serialized, err := json.Marshal(test)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := strings.ReplaceAll(buff, "\n", "")
+	if string(serialized) != expected {
+		t.Error("serialization/deserialization of sparkWorker failed")
+	}
 }
