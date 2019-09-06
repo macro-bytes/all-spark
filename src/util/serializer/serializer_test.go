@@ -1,21 +1,22 @@
-package serializer
+package serializer_test
 
 import (
 	"spark_monitor"
 	"strings"
 	"template"
 	"testing"
+	"util/serializer"
 )
 
 func TestDeserializePath(t *testing.T) {
 	var template template.DockerTemplate
 
-	err := DeserializePath("does-not-exist", &template)
+	err := serializer.DeserializePath("does-not-exist", &template)
 	if err == nil {
 		t.Error("Expected non-nil error")
 	}
 
-	err = DeserializePath("../../../sample_templates/docker.json", &template)
+	err = serializer.DeserializePath("../../../sample_templates/docker.json", &template)
 	if err != nil {
 		t.Error(err)
 	}
@@ -23,7 +24,7 @@ func TestDeserializePath(t *testing.T) {
 
 func TestSerializeAndDeserialize(t *testing.T) {
 	buffer := `{
-"url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
+"ClusterStatus":{"url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
 "workers":[{
 "id":"worker-20190904193157-172.30.0.132-7078",
 "host":"172.30.0.132",
@@ -69,15 +70,16 @@ func TestSerializeAndDeserialize(t *testing.T) {
 "duration":113949
 }],
 "status":"ALIVE"
-}`
+},
+"Timestamp":1257894000}`
 
-	var clusterStatus spark_monitor.SparkClusterStatus
-	err := Deserialize([]byte(buffer), &clusterStatus)
+	var clusterStatus spark_monitor.SparkClusterStatusAtEpoch
+	err := serializer.Deserialize([]byte(buffer), &clusterStatus)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	actual, err := Serialize(clusterStatus)
+	actual, err := serializer.Serialize(clusterStatus)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,8 @@
 {
     "RedisHost":
-        "localhost:6379"
+        "localhost:6379",
+    "ClusterPendingTimeout":
+        600,
+    "ClusterIdleTimeout":
+        600
 }

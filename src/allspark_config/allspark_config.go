@@ -7,8 +7,10 @@ import (
 
 // AllSparkConfig - allspark configuration parameters struct
 type AllSparkConfig struct {
-	RedisHost     string
-	RedisPassword string
+	RedisHost             string
+	RedisPassword         string
+	ClusterPendingTimeout int64
+	ClusterIdleTimeout    int64
 }
 
 var config AllSparkConfig

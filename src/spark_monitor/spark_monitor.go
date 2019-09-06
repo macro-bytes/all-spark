@@ -1,9 +1,18 @@
 package spark_monitor
 
 import (
+	"datastore"
+	"strconv"
 	"time"
 )
 
+const (
+	statusPending = "STATUS_PENDING"
+	statusIdle    = "STATUS_IDLE"
+	statusRunning = "STATUS_RUNNING"
+)
+
+// SparkWorker describes the spark worker node state
 type SparkWorker struct {
 	ID            string `json:"id"`
 	Host          string `json:"host"`
@@ -19,6 +28,7 @@ type SparkWorker struct {
 	LastHeartBeat uint64 `json:"lastheartbeat"`
 }
 
+// SparkApp describes the spark application state
 type SparkApp struct {
 	ID             string `json:"id"`
 	StartTime      uint64 `json:"starttime"`
@@ -31,6 +41,7 @@ type SparkApp struct {
 	Duration       uint64 `json:"duration"`
 }
 
+// SparkClusterStatus describes the entire spark cluster state
 type SparkClusterStatus struct {
 	URL           string        `json:"url"`
 	Workers       []SparkWorker `json:"workers"`
@@ -44,35 +55,64 @@ type SparkClusterStatus struct {
 	Status        string        `json:"status"`
 }
 
+// SparkClusterStatusAtEpoch describes the state of a cluster
+// at a given timestamp
+type SparkClusterStatusAtEpoch struct {
+	ClusterStatus SparkClusterStatus
+	Timestamp     int64
+}
+
+// HandleCheckIn - handles spark monitor check-in http requests
 func HandleCheckIn(clusterID, clusterStatus []byte) {
 
 }
 
-func SetIdle(clusterID string, clusterStatus []byte) {
-
-}
-
+// SetPending - sets spark cluster status to pending
 func SetPending(clusterID string, clusterStatus []byte) {
-
+	register(statusPending, clusterID, clusterStatus)
 }
 
+// SetIdle - sets spark cluster status to idle
+func SetIdle(clusterID string, clusterStatus []byte) {
+	register(statusIdle, clusterID, clusterStatus)
+}
+
+// SetRunning - sets spark cluster status to running (i.e. job is running)
 func SetRunning(clusterID string, clusterStatus []byte) {
-
+	register(statusRunning, clusterID, clusterStatus)
 }
 
-func RunClusterMonitor(iterations int) {
+func register(hmap string, clusterID string, status []byte) {
+	client := datastore.GetRedisClient()
+	defer client.Close()
+
+	client.HSet(hmap, clusterID, string(status))
+}
+
+// MonitorSparkClusters - daemon used for monitoring all spark clusters;
+// monitor will run for the specified number of iterations, or indefinitely
+// if iterations <= 0.
+func MonitorSparkClusters(iterations int) {
 	if iterations <= 0 {
 		for {
-			runClusterMonitorHelper()
+			monitorClusterHelper()
 			time.Sleep(10 * time.Second)
 		}
 	}
 	for i := 0; i < iterations; i++ {
-		runClusterMonitorHelper()
+		monitorClusterHelper()
 		time.Sleep(10 * time.Second)
 	}
 }
 
-func runClusterMonitorHelper() {
+func monitorClusterHelper() {
 
+}
+
+func getTimestamp() int64 {
+	return time.Now().Unix()
+}
+
+func getTimestampAsString() string {
+	return strconv.FormatInt(time.Now().Unix(), 10)
 }
