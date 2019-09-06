@@ -7,7 +7,6 @@ import (
 	"template"
 	"time"
 	"util/netutil"
-	"util/template_reader"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -162,7 +161,7 @@ func (e *AwsEnvironment) CreateClusterHelper(awsTemplate template.AwsTemplate) (
 // CreateCluster - deserializes the supplied template and creates a spark cluster
 func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
 	var awsTemplate template.AwsTemplate
-	err := template_reader.Deserialize(templatePath, &awsTemplate)
+	err := DeserializeTemplate(templatePath, &awsTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -192,7 +191,7 @@ func (e *AwsEnvironment) DestroyClusterHelper(awsTemplate template.AwsTemplate) 
 // DestroyCluster - destroys the spark cluster
 func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
 	var awsTemplate template.AwsTemplate
-	err := template_reader.Deserialize(templatePath, &awsTemplate)
+	err := DeserializeTemplate(templatePath, &awsTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,7 +7,6 @@ import (
 	"template"
 	"time"
 	"util/netutil"
-	"util/template_reader"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -62,7 +61,7 @@ func (e *DockerEnvironment) CreateClusterHelper(dockerTemplate template.DockerTe
 // CreateCluster - creates spark clusters
 func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
 	var dockerTemplate template.DockerTemplate
-	err := template_reader.Deserialize(templatePath, &dockerTemplate)
+	err := DeserializeTemplate(templatePath, &dockerTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +94,7 @@ func (e *DockerEnvironment) DestroyClusterHelper(dockerTemplate template.DockerT
 // DestroyCluster - destroys spark clusters
 func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
 	var dockerTemplate template.DockerTemplate
-	err := template_reader.Deserialize(templatePath, &dockerTemplate)
+	err := DeserializeTemplate(templatePath, &dockerTemplate)
 	if err != nil {
 		log.Fatal(err)
 	}
