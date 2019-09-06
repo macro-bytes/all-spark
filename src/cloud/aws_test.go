@@ -4,11 +4,12 @@ import (
 	"strconv"
 	"template"
 	"testing"
+	"util/serializer"
 )
 
 func TestCreateAwsCluster(t *testing.T) {
 	var template template.AwsTemplate
-	DeserializeTemplate("../../sample_templates/aws.json",
+	serializer.DeserializePath("../../sample_templates/aws.json",
 		&template)
 
 	cloud := Create(Aws)
@@ -43,7 +44,7 @@ func TestCreateAwsCluster(t *testing.T) {
 func TestDestroyAwsCluster(t *testing.T) {
 	templatePath := "../../sample_templates/aws.json"
 	var template template.AwsTemplate
-	DeserializeTemplate(templatePath, &template)
+	serializer.DeserializePath(templatePath, &template)
 
 	cloud := Create(Aws)
 	cloud.DestroyCluster(templatePath)

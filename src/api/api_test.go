@@ -2,13 +2,13 @@ package api
 
 import (
 	"bytes"
-	"cloud"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"template"
 	"testing"
+	"util/serializer"
 )
 
 func createBadFormDataAws() []byte {
@@ -24,7 +24,7 @@ func createBadFormDataAws() []byte {
 
 func createValidFormDataAws() []byte {
 	var template template.AwsTemplate
-	cloud.DeserializeTemplate("../../sample_templates/aws.json",
+	serializer.DeserializePath("../../sample_templates/aws.json",
 		&template)
 
 	buff, _ := json.Marshal(template)
@@ -43,7 +43,7 @@ func createBadFormDataDocker() []byte {
 
 func createValidFormDataDocker() []byte {
 	var template template.DockerTemplate
-	cloud.DeserializeTemplate("../../sample_templates/docker.json",
+	serializer.DeserializePath("../../sample_templates/docker.json",
 		&template)
 
 	buff, _ := json.Marshal(template)

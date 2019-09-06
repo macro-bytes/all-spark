@@ -4,11 +4,12 @@ import (
 	"strconv"
 	"template"
 	"testing"
+	"util/serializer"
 )
 
 func TestCreateDockerCluster(t *testing.T) {
 	var template template.DockerTemplate
-	DeserializeTemplate("../../sample_templates/docker.json",
+	serializer.DeserializePath("../../sample_templates/docker.json",
 		&template)
 	cloud := Create(Docker)
 
@@ -39,7 +40,7 @@ func TestCreateDockerCluster(t *testing.T) {
 func TestDestroyDockerCluster(t *testing.T) {
 	templatePath := "../../sample_templates/docker.json"
 	var template template.DockerTemplate
-	DeserializeTemplate(templatePath, &template)
+	serializer.DeserializePath(templatePath, &template)
 
 	cloud := Create(Docker)
 	cloud.DestroyCluster(templatePath)
@@ -54,19 +55,5 @@ func TestDestroyDockerCluster(t *testing.T) {
 	if 0 != actualNodeCount {
 		t.Error("- expected 0 spark nodes.")
 		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
-	}
-}
-
-func TestDeserializeTemplate(t *testing.T) {
-	var template template.DockerTemplate
-
-	err := DeserializeTemplate("does-not-exist", &template)
-	if err == nil {
-		t.Error("Expected non-nil error")
-	}
-
-	err = DeserializeTemplate("../../sample_templates/docker.json", &template)
-	if err != nil {
-		t.Error(err)
 	}
 }
