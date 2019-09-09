@@ -2,14 +2,17 @@ package spark_monitor
 
 import (
 	"datastore"
+	"log"
 	"strconv"
 	"time"
+	"util/serializer"
 )
 
 const (
-	statusPending = "STATUS_PENDING"
-	statusIdle    = "STATUS_IDLE"
-	statusRunning = "STATUS_RUNNING"
+	statusPending = "PENDING"
+	statusIdle    = "IDLE"
+	statusRunning = "RUNNING"
+	statusMap     = "STATUS_MAP"
 )
 
 // SparkWorker describes the spark worker node state
@@ -58,35 +61,64 @@ type SparkClusterStatus struct {
 // SparkClusterStatusAtEpoch describes the state of a cluster
 // at a given timestamp
 type SparkClusterStatusAtEpoch struct {
-	ClusterStatus SparkClusterStatus
-	Timestamp     int64
+	Timestamp int64
+	Status    string
 }
 
 // HandleCheckIn - handles spark monitor check-in http requests
-func HandleCheckIn(clusterID, clusterStatus []byte) {
+func HandleCheckIn(clusterID string, clusterStatus []byte) {
+	log.Printf("cluster: %s, status: %s", clusterID, string(clusterStatus))
+	var reportedStatus SparkClusterStatus
+	serializer.Deserialize(clusterStatus, &reportedStatus)
 
+	epochStatus := SparkClusterStatusAtEpoch{
+		Timestamp: getTimestamp(),
+		Status:    getReportedStatus(reportedStatus),
+	}
+
+	setStatus(clusterID, epochStatus)
 }
 
-// SetPending - sets spark cluster status to pending
-func SetPending(clusterID string, clusterStatus []byte) {
-	register(statusPending, clusterID, clusterStatus)
+// RegisterCluster - registers newly created spark
+// cluster with a pending status
+func RegisterCluster(clusterID string) {
+	setStatus(clusterID, SparkClusterStatusAtEpoch{
+		Status: statusPending,
+	})
 }
 
-// SetIdle - sets spark cluster status to idle
-func SetIdle(clusterID string, clusterStatus []byte) {
-	register(statusIdle, clusterID, clusterStatus)
+func getReportedStatus(status SparkClusterStatus) string {
+	if len(status.ActiveApps) > 0 {
+		return statusRunning
+	}
+
+	return statusIdle
 }
 
-// SetRunning - sets spark cluster status to running (i.e. job is running)
-func SetRunning(clusterID string, clusterStatus []byte) {
-	register(statusRunning, clusterID, clusterStatus)
-}
-
-func register(hmap string, clusterID string, status []byte) {
+func getPriorStatus(clusterID string) string {
 	client := datastore.GetRedisClient()
 	defer client.Close()
 
-	client.HSet(hmap, clusterID, string(status))
+	var clusterState SparkClusterStatusAtEpoch
+	err := serializer.Deserialize([]byte(client.HGet(statusMap, clusterID).Val()),
+		&clusterState)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return clusterState.Status
+}
+
+func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
+	client := datastore.GetRedisClient()
+	defer client.Close()
+
+	result, err := serializer.Serialize(status)
+	if err != nil {
+		log.Println(err)
+	}
+
+	client.HSet(statusMap, clusterID, string(result))
 }
 
 // MonitorSparkClusters - daemon used for monitoring all spark clusters;

@@ -24,7 +24,7 @@ func TestDeserializePath(t *testing.T) {
 
 func TestSerializeAndDeserialize(t *testing.T) {
 	buffer := `{
-"ClusterStatus":{"url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
+"url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
 "workers":[{
 "id":"worker-20190904193157-172.30.0.132-7078",
 "host":"172.30.0.132",
@@ -70,10 +70,9 @@ func TestSerializeAndDeserialize(t *testing.T) {
 "duration":113949
 }],
 "status":"ALIVE"
-},
-"Timestamp":1257894000}`
+}`
 
-	var clusterStatus spark_monitor.SparkClusterStatusAtEpoch
+	var clusterStatus spark_monitor.SparkClusterStatus
 	err := serializer.Deserialize([]byte(buffer), &clusterStatus)
 	if err != nil {
 		t.Fatal(err)
