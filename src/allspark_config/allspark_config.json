@@ -4,5 +4,7 @@
     "ClusterPendingTimeout":
         600,
     "ClusterIdleTimeout":
-        600
+        600,
+    "CloudEnvironment":
+        "aws"
 }

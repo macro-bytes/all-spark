@@ -4,10 +4,8 @@ import (
 	b64 "encoding/base64"
 	"log"
 	"strconv"
-	"template"
 	"time"
 	"util/netutil"
-	"util/serializer"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,12 +14,21 @@ import (
 
 // AwsEnvironment interface
 type AwsEnvironment struct {
-	region string
+	ClusterID        string
+	ImageID          string
+	InstanceType     string
+	EBSVolumeSize    int64
+	SubnetID         string
+	SecurityGroupIds []string
+	WorkerNodes      int64
+	Region           string
+	IAMRole          string
+	KeyName          string
 }
 
 func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(e.region)},
+		Region: aws.String(e.Region)},
 	)
 
 	if err != nil {
@@ -31,24 +38,24 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	return ec2.New(sess)
 }
 
-func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
-	identifier string, instanceCount int64, userData string) (*ec2.Reservation, error) {
+func (e *AwsEnvironment) launchInstances(identifier string,
+	instanceCount int64, userData string) (*ec2.Reservation, error) {
 
 	cli := e.getEc2Client()
 
 	encodedUserData := b64.StdEncoding.EncodeToString([]byte(userData))
 
 	resp, err := cli.RunInstances(&ec2.RunInstancesInput{
-		ImageId:          aws.String(template.ImageId),
-		InstanceType:     aws.String(template.InstanceType),
+		ImageId:          aws.String(e.ImageID),
+		InstanceType:     aws.String(e.InstanceType),
 		MinCount:         aws.Int64(instanceCount),
 		MaxCount:         aws.Int64(instanceCount),
-		SecurityGroupIds: aws.StringSlice(template.SecurityGroupIds),
-		SubnetId:         aws.String(template.SubnetId),
+		SecurityGroupIds: aws.StringSlice(e.SecurityGroupIds),
+		SubnetId:         aws.String(e.SubnetID),
 		UserData:         aws.String(encodedUserData),
-		KeyName:          aws.String(template.KeyName),
+		KeyName:          aws.String(e.KeyName),
 		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-			Name: aws.String(template.IAMRole),
+			Name: aws.String(e.IAMRole),
 		},
 
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
@@ -56,7 +63,7 @@ func (e *AwsEnvironment) launchInstances(template template.AwsTemplate,
 				DeviceName: aws.String("/dev/sda1"),
 				Ebs: &ec2.EbsBlockDevice{
 					Encrypted:  aws.Bool(true),
-					VolumeSize: aws.Int64(template.EBSVolumeSize),
+					VolumeSize: aws.Int64(e.EBSVolumeSize),
 					VolumeType: aws.String("gp2"),
 				},
 			},
@@ -108,14 +115,12 @@ func (e *AwsEnvironment) getPublicIP(instanceID string) (string, error) {
 	return *response.Reservations[0].Instances[0].PublicIpAddress, nil
 }
 
-func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
-	baseIdentifier string) (string, string, error) {
+func (e *AwsEnvironment) launchMaster() (string, string, error) {
 
-	workers := strconv.FormatInt(template.WorkerNodes, 10)
+	workers := strconv.FormatInt(e.WorkerNodes, 10)
 	userData := "export EXPECTED_WORKERS=" + workers
 
-	res, err := e.launchInstances(template, baseIdentifier+masterIdentifier,
-		1, userData)
+	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)
 	if err != nil {
 		return "", "", err
 	}
@@ -125,26 +130,21 @@ func (e *AwsEnvironment) launchMaster(template template.AwsTemplate,
 	return *res.Instances[0].InstanceId, privateIP, err
 }
 
-func (e *AwsEnvironment) launchWorkers(template template.AwsTemplate,
-	baseIdentifier string, masterIP string) (*ec2.Reservation, error) {
+func (e *AwsEnvironment) launchWorkers(masterIP string) (*ec2.Reservation, error) {
 
 	userData := "export MASTER_IP=" + masterIP
 
-	return e.launchInstances(template,
-		baseIdentifier+workerIdentifier,
-		template.WorkerNodes,
-		userData)
+	return e.launchInstances(e.ClusterID+workerIdentifier,
+		e.WorkerNodes, userData)
 }
 
-// CreateClusterHelper - helper function for creating the spark cluster
-func (e *AwsEnvironment) CreateClusterHelper(awsTemplate template.AwsTemplate) (string, error) {
-	e.region = awsTemplate.Region
-	baseIdentifier := buildBaseIdentifier(awsTemplate.ClusterID)
-	instanceID, privateIP, err := e.launchMaster(awsTemplate, baseIdentifier)
+// CreateCluster - creates a spark cluster in AWS
+func (e *AwsEnvironment) CreateCluster() (string, error) {
+	instanceID, privateIP, err := e.launchMaster()
 	if err != nil {
 		return "", err
 	}
-	_, err = e.launchWorkers(awsTemplate, baseIdentifier, privateIP)
+	_, err = e.launchWorkers(privateIP)
 
 	publicIP, err := e.getPublicIP(instanceID)
 	if err != nil {
@@ -159,24 +159,10 @@ func (e *AwsEnvironment) CreateClusterHelper(awsTemplate template.AwsTemplate) (
 	return webURL, err
 }
 
-// CreateCluster - deserializes the supplied template and creates a spark cluster
-func (e *AwsEnvironment) CreateCluster(templatePath string) (string, error) {
-	var awsTemplate template.AwsTemplate
-	err := serializer.DeserializePath(templatePath, &awsTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return e.CreateClusterHelper(awsTemplate)
-}
-
-// DestroyClusterHelper - helper function for destroying spark clusters
-func (e *AwsEnvironment) DestroyClusterHelper(awsTemplate template.AwsTemplate) error {
-	e.region = awsTemplate.Region
-
-	identifier := awsTemplate.ClusterID
-
+// DestroyCluster - destroys a spark cluster in AWS
+func (e *AwsEnvironment) DestroyCluster() error {
 	cli := e.getEc2Client()
-	instances, err := e.getClusterNodes(identifier)
+	instances, err := e.getClusterNodes()
 	if err != nil {
 		return err
 	}
@@ -189,17 +175,7 @@ func (e *AwsEnvironment) DestroyClusterHelper(awsTemplate template.AwsTemplate) 
 	return err
 }
 
-// DestroyCluster - destroys the spark cluster
-func (e *AwsEnvironment) DestroyCluster(templatePath string) error {
-	var awsTemplate template.AwsTemplate
-	err := serializer.DeserializePath(templatePath, &awsTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return e.DestroyClusterHelper(awsTemplate)
-}
-
-func (e *AwsEnvironment) getClusterNodes(identifier string) ([]string, error) {
+func (e *AwsEnvironment) getClusterNodes() ([]string, error) {
 	var instances []string
 
 	cli := e.getEc2Client()
@@ -208,9 +184,12 @@ func (e *AwsEnvironment) getClusterNodes(identifier string) ([]string, error) {
 			Filters: []*ec2.Filter{
 				{
 					Name:   aws.String("tag:Name"),
-					Values: aws.StringSlice([]string{identifier + "*"}),
+					Values: aws.StringSlice([]string{e.ClusterID + "*"}),
 				},
-
+				{
+					Name:   aws.String("network-interface.subnet-id"),
+					Values: aws.StringSlice([]string{e.SubnetID}),
+				},
 				{
 					Name:   aws.String("instance-state-name"),
 					Values: aws.StringSlice([]string{"running", "pending"}),

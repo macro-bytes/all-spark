@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"template"
 )
 
-func validateDockerTemplate(template template.DockerTemplate) error {
+func validateDockerTemplate(template cloud.DockerEnvironment) error {
 	if len(template.ClusterID) == 0 ||
 		template.MemBytes < 10 ||
 		template.NanoCpus < 10 ||
@@ -30,7 +29,7 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	var template template.DockerTemplate
+	var template cloud.DockerEnvironment
 
 	err = decoder.Decode(&template)
 	if err != nil {
@@ -46,8 +45,8 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &cloud.DockerEnvironment{}
-	_, err = client.CreateClusterHelper(template)
+	client := &template
+	_, err = client.CreateCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -67,7 +66,7 @@ func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	var template template.DockerTemplate
+	var template cloud.DockerEnvironment
 
 	err = decoder.Decode(&template)
 	if err != nil {
@@ -83,8 +82,8 @@ func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &cloud.DockerEnvironment{}
-	err = client.DestroyClusterHelper(template)
+	client := &template
+	err = client.DestroyCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))

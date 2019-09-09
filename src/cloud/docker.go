@@ -4,10 +4,8 @@ import (
 	"context"
 	"log"
 	"strconv"
-	"template"
 	"time"
 	"util/netutil"
-	"util/serializer"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -15,6 +13,16 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 )
+
+// DockerEnvironment interface
+type DockerEnvironment struct {
+	NanoCpus    int64
+	MemBytes    int64
+	Network     string
+	ClusterID   string
+	WorkerNodes int
+	Image       string
+}
 
 func (e *DockerEnvironment) getDockerClient() *client.Client {
 	ctx := context.Background()
@@ -26,30 +34,24 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 	return cli
 }
 
-// DockerEnvironment interface
-type DockerEnvironment struct{}
-
-// CreateClusterHelper - helper function for creating spark clusters
-func (e *DockerEnvironment) CreateClusterHelper(dockerTemplate template.DockerTemplate) (string, error) {
-	baseIdentifier := buildBaseIdentifier(dockerTemplate.ClusterID)
-
-	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(dockerTemplate.WorkerNodes)
-	containerID, err := e.createSparkNode(dockerTemplate,
-		baseIdentifier+masterIdentifier, []string{expectedWorkers})
+// CreateCluster - creates a spark cluster in docker
+func (e *DockerEnvironment) CreateCluster() (string, error) {
+	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(e.WorkerNodes)
+	containerID, err := e.createSparkNode(e.ClusterID+masterIdentifier, []string{expectedWorkers})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	masterIP, err := e.getIPAddress(containerID, dockerTemplate.Network)
+	masterIP, err := e.getIPAddress(containerID, e.Network)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
 		env := []string{"MASTER_IP=" + masterIP}
-		for i := 1; i <= dockerTemplate.WorkerNodes; i++ {
-			identifier := baseIdentifier + workerIdentifier + strconv.Itoa(i)
-			e.createSparkNode(dockerTemplate, identifier, env)
+		for i := 1; i <= e.WorkerNodes; i++ {
+			identifier := e.ClusterID + workerIdentifier + strconv.Itoa(i)
+			e.createSparkNode(identifier, env)
 		}
 	} else {
 		log.Fatal("master node has failed to come online")
@@ -59,25 +61,12 @@ func (e *DockerEnvironment) CreateClusterHelper(dockerTemplate template.DockerTe
 	return webURL, nil
 }
 
-// CreateCluster - creates spark clusters
-func (e *DockerEnvironment) CreateCluster(templatePath string) (string, error) {
-	var dockerTemplate template.DockerTemplate
-	err := serializer.DeserializePath(templatePath, &dockerTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return e.CreateClusterHelper(dockerTemplate)
-
-}
-
-// DestroyClusterHelper - helper function for destroying spark clusters
-func (e *DockerEnvironment) DestroyClusterHelper(dockerTemplate template.DockerTemplate) error {
-	identifier := dockerTemplate.ClusterID
+// DestroyCluster - destroys the spark cluster in docker
+func (e *DockerEnvironment) DestroyCluster() error {
 	cli := e.getDockerClient()
 	defer cli.Close()
 
-	clusterNodes, err := e.getClusterNodes(identifier)
+	clusterNodes, err := e.getClusterNodes()
 	if err != nil {
 		return err
 	}
@@ -92,22 +81,12 @@ func (e *DockerEnvironment) DestroyClusterHelper(dockerTemplate template.DockerT
 	return nil
 }
 
-// DestroyCluster - destroys spark clusters
-func (e *DockerEnvironment) DestroyCluster(templatePath string) error {
-	var dockerTemplate template.DockerTemplate
-	err := serializer.DeserializePath(templatePath, &dockerTemplate)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return e.DestroyClusterHelper(dockerTemplate)
-}
-
-func (e *DockerEnvironment) getClusterNodes(identifier string) ([]string, error) {
+func (e *DockerEnvironment) getClusterNodes() ([]string, error) {
 	cli := e.getDockerClient()
 	defer cli.Close()
 
 	filters := filters.NewArgs()
-	filters.Add("name", identifier)
+	filters.Add("name", e.ClusterID)
 
 	resp, err := cli.ContainerList(context.Background(),
 		types.ContainerListOptions{Filters: filters})
@@ -135,8 +114,7 @@ func (e *DockerEnvironment) getIPAddress(id string, network string) (string, err
 	return resp.NetworkSettings.Networks[network].IPAddress, nil
 }
 
-func (e *DockerEnvironment) createSparkNode(dockerTemplate template.DockerTemplate,
-	identifier string,
+func (e *DockerEnvironment) createSparkNode(identifier string,
 	envParams []string) (string, error) {
 
 	cli := e.getDockerClient()
@@ -144,13 +122,13 @@ func (e *DockerEnvironment) createSparkNode(dockerTemplate template.DockerTempla
 
 	resp, err := cli.ContainerCreate(context.Background(),
 		&container.Config{
-			Image: dockerTemplate.Image,
+			Image: e.Image,
 			Env:   envParams,
 		},
 		&container.HostConfig{
 			Resources: container.Resources{
-				NanoCPUs: dockerTemplate.NanoCpus,
-				Memory:   dockerTemplate.MemBytes,
+				NanoCPUs: e.NanoCpus,
+				Memory:   e.MemBytes,
 			},
 			NetworkMode: "all-spark-bridge",
 		},

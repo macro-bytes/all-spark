@@ -1,12 +1,13 @@
 package cloud
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"spark_monitor"
-	"strconv"
 	"time"
 	"util/serializer"
 )
@@ -25,11 +26,11 @@ const (
 	aliveWorkers     = "Alive Workers:"
 )
 
-// Environment base interface
-type Environment interface {
-	CreateCluster(templatePath string) (string, error)
-	DestroyCluster(templatePath string) error
-	getClusterNodes(identifier string) ([]string, error)
+// CloudEnvironment base interface
+type CloudEnvironment interface {
+	CreateCluster() (string, error)
+	DestroyCluster() error
+	getClusterNodes() ([]string, error)
 }
 
 func waitForCluster(sparkWebURL string, expectedWorkerCount int,
@@ -68,22 +69,33 @@ func getAliveWorkerCount(sparkWebURL string) (int, error) {
 	return 0, err
 }
 
-func buildBaseIdentifier(identifier string) string {
-	return identifier + "-" + strconv.FormatInt(time.Now().Unix(), 10)
+// ReadTemplateConfiguration - reads a template configuration file
+func ReadTemplateConfiguration(path string) ([]byte, error) {
+	template, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer template.Close()
+
+	return ioutil.ReadAll(template)
 }
 
 // Create a cloud environment (e.g. AWS, Docker, Azure, etc..)
-func Create(environment string) Environment {
+func Create(environment string, clusterConfiguration []byte) (CloudEnvironment, error) {
 	switch environment {
 	case Aws:
-		return &AwsEnvironment{}
+		var result AwsEnvironment
+		err := json.Unmarshal(clusterConfiguration, &result)
+		return &result, err
 	case Azure:
-		return &AzureEnvironment{}
+		return &AzureEnvironment{}, nil
 	case Docker:
-		return &DockerEnvironment{}
+		var result DockerEnvironment
+		err := json.Unmarshal(clusterConfiguration, &result)
+		return &result, err
 	default:
 		log.Fatal("invalid cloud-environment " + environment)
 	}
 
-	return nil
+	return nil, nil
 }

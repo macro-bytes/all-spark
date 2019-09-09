@@ -5,18 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"template"
 )
 
-func validateAwsTemplate(template template.AwsTemplate) error {
+func validateAwsTemplate(template cloud.AwsEnvironment) error {
 	if len(template.ClusterID) == 0 ||
 		template.EBSVolumeSize < 10 ||
 		len(template.IAMRole) == 0 ||
-		len(template.ImageId) == 0 ||
+		len(template.ImageID) == 0 ||
 		len(template.InstanceType) == 0 ||
 		len(template.Region) == 0 ||
 		len(template.SecurityGroupIds) == 0 ||
-		len(template.SubnetId) == 0 ||
+		len(template.SubnetID) == 0 ||
 		template.WorkerNodes < 2 {
 		return errors.New("invalid template object")
 	}
@@ -33,7 +32,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	var template template.AwsTemplate
+	var template cloud.AwsEnvironment
 
 	err = decoder.Decode(&template)
 	if err != nil {
@@ -49,8 +48,8 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &cloud.AwsEnvironment{}
-	_, err = client.CreateClusterHelper(template)
+	client := &template
+	_, err = client.CreateCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -70,7 +69,7 @@ func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	var template template.AwsTemplate
+	var template cloud.AwsEnvironment
 
 	err = decoder.Decode(&template)
 	if err != nil {
@@ -86,8 +85,8 @@ func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &cloud.AwsEnvironment{}
-	err = client.DestroyClusterHelper(template)
+	client := &template
+	err = client.DestroyCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))

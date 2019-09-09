@@ -1,15 +1,15 @@
 package serializer_test
 
 import (
+	"cloud"
 	"spark_monitor"
 	"strings"
-	"template"
 	"testing"
 	"util/serializer"
 )
 
 func TestDeserializePath(t *testing.T) {
-	var template template.DockerTemplate
+	var template cloud.DockerEnvironment
 
 	err := serializer.DeserializePath("does-not-exist", &template)
 	if err == nil {

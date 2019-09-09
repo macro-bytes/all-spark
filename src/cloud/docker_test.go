@@ -2,28 +2,48 @@ package cloud
 
 import (
 	"strconv"
-	"template"
 	"testing"
 	"util/serializer"
 )
 
+const (
+	dockerTemplatePath = "../../sample_templates/docker.json"
+)
+
+func getDockerClient(t *testing.T) CloudEnvironment {
+	templateConfig, err := ReadTemplateConfiguration(dockerTemplatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cloud, err := Create(Docker, templateConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cloud
+}
+
 func TestCreateDockerCluster(t *testing.T) {
-	var template template.DockerTemplate
-	serializer.DeserializePath("../../sample_templates/docker.json",
-		&template)
-	cloud := Create(Docker)
+	cloud := getDockerClient(t)
+	var spec DockerEnvironment
 
-	webURL, err := cloud.CreateCluster("../../sample_templates/docker.json")
+	err := serializer.DeserializePath(dockerTemplatePath, &spec)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)
+	webURL, err := cloud.CreateCluster()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expectedNodeCount := template.WorkerNodes + 1
+	clusterNodes, err := cloud.getClusterNodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedNodeCount := spec.WorkerNodes + 1
 	actualNodeCount := len(clusterNodes)
 
 	if expectedNodeCount != actualNodeCount {
@@ -31,21 +51,17 @@ func TestCreateDockerCluster(t *testing.T) {
 		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
 	}
 
-	err = waitForCluster(webURL, template.WorkerNodes, 20)
+	err = waitForCluster(webURL, spec.WorkerNodes, 20)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestDestroyDockerCluster(t *testing.T) {
-	templatePath := "../../sample_templates/docker.json"
-	var template template.DockerTemplate
-	serializer.DeserializePath(templatePath, &template)
+	cloud := getDockerClient(t)
+	cloud.DestroyCluster()
 
-	cloud := Create(Docker)
-	cloud.DestroyCluster(templatePath)
-
-	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)
+	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Fatal(err)
 	}

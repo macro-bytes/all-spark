@@ -2,28 +2,48 @@ package cloud
 
 import (
 	"strconv"
-	"template"
 	"testing"
 	"util/serializer"
 )
 
-func TestCreateAwsCluster(t *testing.T) {
-	var template template.AwsTemplate
-	serializer.DeserializePath("../../sample_templates/aws.json",
-		&template)
+const (
+	awsTemplatePath = "../../sample_templates/aws.json"
+)
 
-	cloud := Create(Aws)
-	_, err := cloud.CreateCluster("../../sample_templates/aws.json")
+func getAwsClient(t *testing.T) CloudEnvironment {
+	templateConfig, err := ReadTemplateConfiguration(awsTemplatePath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)
+	cloud, err := Create(Aws, templateConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cloud
+}
+
+func TestCreateAwsCluster(t *testing.T) {
+	cloud := getAwsClient(t)
+	var spec AwsEnvironment
+
+	err := serializer.DeserializePath(awsTemplatePath, &spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = cloud.CreateCluster()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Error(err)
 	}
 
-	expectedNodeCount := template.WorkerNodes + 1
+	expectedNodeCount := spec.WorkerNodes + 1
 	actualNodeCount := int64(len(clusterNodes))
 
 	if expectedNodeCount != actualNodeCount {
@@ -32,24 +52,13 @@ func TestCreateAwsCluster(t *testing.T) {
 		t.Error("- got " + strconv.FormatInt(actualNodeCount, 10) +
 			" spark nodes.")
 	}
-
-	/*
-		err = waitForCluster(webUrl, int(template.WorkerNodes), 10)
-		if err != nil {
-			t.Fatal(err)
-		}
-	*/
 }
 
 func TestDestroyAwsCluster(t *testing.T) {
-	templatePath := "../../sample_templates/aws.json"
-	var template template.AwsTemplate
-	serializer.DeserializePath(templatePath, &template)
+	cloud := getAwsClient(t)
+	cloud.DestroyCluster()
 
-	cloud := Create(Aws)
-	cloud.DestroyCluster(templatePath)
-
-	clusterNodes, err := cloud.getClusterNodes(template.ClusterID)
+	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Error(err)
 	}

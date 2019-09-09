@@ -1,7 +1,7 @@
 export GOPATH=`pwd`
-go test -v util/netutil
-go test -v cloud
-go test -v api
-go test -v spark_monitor
-go test -v util/serializer
-go test -v datastore
+go test -count=1 -v util/netutil
+go test -count=1 -v cloud
+go test -count=1 -v api
+go test -count=1 -v spark_monitor
+go test -count=1 -v util/serializer
+go test -count=1 -v datastore

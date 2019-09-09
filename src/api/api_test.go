@@ -2,17 +2,17 @@ package api
 
 import (
 	"bytes"
+	"cloud"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"template"
 	"testing"
 	"util/serializer"
 )
 
 func createBadFormDataAws() []byte {
-	var template = template.AwsTemplate{
+	var template = cloud.AwsEnvironment{
 		ClusterID:     "test",
 		EBSVolumeSize: 0,
 		IAMRole:       "test",
@@ -23,7 +23,7 @@ func createBadFormDataAws() []byte {
 }
 
 func createValidFormDataAws() []byte {
-	var template template.AwsTemplate
+	var template cloud.AwsEnvironment
 	serializer.DeserializePath("../../sample_templates/aws.json",
 		&template)
 
@@ -32,7 +32,7 @@ func createValidFormDataAws() []byte {
 }
 
 func createBadFormDataDocker() []byte {
-	var template = template.DockerTemplate{
+	var template = cloud.DockerEnvironment{
 		ClusterID: "test",
 		Image:     "image-does-not-exist",
 	}
@@ -42,7 +42,7 @@ func createBadFormDataDocker() []byte {
 }
 
 func createValidFormDataDocker() []byte {
-	var template template.DockerTemplate
+	var template cloud.DockerEnvironment
 	serializer.DeserializePath("../../sample_templates/docker.json",
 		&template)
 

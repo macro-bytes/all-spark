@@ -31,8 +31,17 @@ func handleCreateCluster(options *flag.FlagSet,
 	log.Printf("Launching spark cluster (note: this may take approximately 45 seconds).")
 	start := time.Now().Unix()
 
-	client := cloud.Create(cloudEnvironment)
-	url, err := client.CreateCluster(templatePath)
+	templateConfig, err := cloud.ReadTemplateConfiguration(templatePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client, err := cloud.Create(cloudEnvironment, templateConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	url, err := client.CreateCluster()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,8 +54,17 @@ func handleCreateCluster(options *flag.FlagSet,
 func handleDestroyCluster(options *flag.FlagSet,
 	cloudEnvironment string, templatePath string) {
 	handleErrors(options, cloudEnvironment, templatePath)
-	client := cloud.Create(cloudEnvironment)
-	client.DestroyCluster(templatePath)
+
+	templateConfig, err := cloud.ReadTemplateConfiguration(templatePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client, err := cloud.Create(cloudEnvironment, templateConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	client.DestroyCluster()
 }
 
 func main() {

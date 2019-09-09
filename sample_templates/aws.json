@@ -1,13 +1,13 @@
 {
     "ClusterID":
         "aws-spark-cluster",
-    "ImageId":
+    "ImageID":
         "ami-0a4348b9030e78616",
     "InstanceType":
         "m5.2xlarge",
     "EBSVolumeSize":
         10,
-    "SubnetId":
+    "SubnetID":
         "subnet-0f05559509a1a7971",
     "SecurityGroupIds":
         ["sg-0631aa19d85fd7c9b",

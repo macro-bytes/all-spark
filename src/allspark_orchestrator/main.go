@@ -3,45 +3,27 @@
 package main
 
 import (
+	"allspark_config"
+	"api"
 	"cloud"
-	"context"
-	"errors"
-	"template"
-
-	"github.com/aws/aws-lambda-go/lambda"
+	"log"
+	"os"
 )
 
-type lambdaAction struct {
-	command string
-	params  template.AwsTemplate
-}
-
-type lambdaResponse struct {
-	message string
-}
-
-func HandleRequest(ctx context.Context, action lambdaAction) lambdaResponse {
-	client := &cloud.AwsEnvironment{}
-
-	var err error = nil
-	switch action.command {
-	case CreateCluster:
-		_, err = client.CreateClusterHelper(action.params)
-		break
-	case DestroyCluster:
-		err = client.DestroyClusterHelper(action.params)
-		break
-	default:
-		err = errors.New("invalid command " + action.command)
-		break
-	}
-
-	if err != nil {
-		return lambdaResponse{"error: " + err.Error()}
-	}
-	return lambdaResponse{"success"}
-}
-
 func main() {
-	lambda.Start(HandleRequest)
+	if len(os.Args) <= 1 {
+		log.Panic("usage: allspark-orchestrator /path/to/allspark_config.json")
+		os.Exit(1)
+	}
+
+	allspark_config.Init(os.Args[1])
+
+	switch allspark_config.GetAllSparkConfig().CloudEnvironment {
+	case cloud.Aws:
+		api.InitAwsAPI()
+	case cloud.Docker:
+		api.InitDockerAPI()
+	default:
+		log.Panic("invalid cloud environment specified")
+	}
 }
