@@ -4,7 +4,10 @@ import (
 	"cloud"
 	"encoding/json"
 	"errors"
+	"log"
+	"monitor"
 	"net/http"
+	"util/serializer"
 )
 
 func validateDockerTemplate(template cloud.DockerEnvironment) error {
@@ -20,12 +23,10 @@ func validateDockerTemplate(template cloud.DockerEnvironment) error {
 	return nil
 }
 
-func createClusterDocker(w http.ResponseWriter, r *http.Request) {
+func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
 	err := validatePostRequest(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -33,19 +34,25 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 
 	err = decoder.Decode(&template)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
 	err = validateDockerTemplate(template)
+	if err != nil {
+		return nil, err
+	}
+
+	return &template, nil
+}
+
+func createClusterDocker(w http.ResponseWriter, r *http.Request) {
+	client, err := validateDockerFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	client := &template
 	_, err = client.CreateCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -53,42 +60,33 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		log.Println(err)
+	}
+
+	monitor.RegisterCluster(client.ClusterID, cloud.Docker, serializedClient)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully launched cluster"))
 }
 
 func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
-	err := validatePostRequest(r)
+	client, err := validateDockerFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	var template cloud.DockerEnvironment
-
-	err = decoder.Decode(&template)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	err = validateDockerTemplate(template)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	client := &template
 	err = client.DestroyCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
+
+	monitor.DeregisterCluster(client.ClusterID)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully destroyed cluster"))

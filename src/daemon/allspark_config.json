@@ -5,6 +5,8 @@
         600,
     "ClusterIdleTimeout":
         600,
+    "ClusterMaxRuntime":
+        3600,
     "CloudEnvironment":
         "aws"
 }

@@ -3,10 +3,11 @@
 package main
 
 import (
-	"allspark_config"
 	"api"
 	"cloud"
+	"daemon"
 	"log"
+	"monitor"
 	"os"
 )
 
@@ -16,9 +17,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	allspark_config.Init(os.Args[1])
+	daemon.Init(os.Args[1])
+	go monitor.MonitorSparkClusters(-1,
+		daemon.GetAllSparkConfig().ClusterMaxRuntime,
+		daemon.GetAllSparkConfig().ClusterMaxRuntime,
+		daemon.GetAllSparkConfig().ClusterIdleTimeout)
 
-	switch allspark_config.GetAllSparkConfig().CloudEnvironment {
+	switch daemon.GetAllSparkConfig().CloudEnvironment {
 	case cloud.Aws:
 		api.InitAwsAPI()
 	case cloud.Docker:

@@ -1,4 +1,4 @@
-package allspark_config
+package daemon
 
 import (
 	"log"
@@ -11,6 +11,7 @@ type AllSparkConfig struct {
 	RedisPassword         string
 	ClusterPendingTimeout int64
 	ClusterIdleTimeout    int64
+	ClusterMaxRuntime     int64
 	CloudEnvironment      string
 }
 

@@ -7,10 +7,52 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"spark_monitor"
 	"time"
 	"util/serializer"
 )
+
+// SparkWorker describes the spark worker node state
+type SparkWorker struct {
+	ID            string `json:"id"`
+	Host          string `json:"host"`
+	Port          int    `json:"port"`
+	WebUIAddress  string `json:"webuiaddress"`
+	Cores         int    `json:"cores"`
+	CoresUsed     int    `json:"coresused"`
+	CoresFree     int    `json:"coresfree"`
+	Memory        uint64 `json:"memory"`
+	MemoryUsed    uint64 `json:"memoryused"`
+	MemoryFree    uint64 `json:"memoryfree"`
+	State         string `json:"state"`
+	LastHeartBeat uint64 `json:"lastheartbeat"`
+}
+
+// SparkApp describes the spark application state
+type SparkApp struct {
+	ID             string `json:"id"`
+	StartTime      uint64 `json:"starttime"`
+	Name           string `json:"name"`
+	Cores          int    `json:"cores"`
+	User           string `json:"user"`
+	MemoryPerSlave int    `json:"memoryperslave"`
+	SubmitDate     string `json:"submitdate"`
+	State          string `json:"state"`
+	Duration       uint64 `json:"duration"`
+}
+
+// SparkClusterStatus describes the entire spark cluster state
+type SparkClusterStatus struct {
+	URL           string        `json:"url"`
+	Workers       []SparkWorker `json:"workers"`
+	AliveWorkers  int           `json:"aliveworkers"`
+	Cores         int           `json:"cores"`
+	CoresUsed     int           `json:"coresused"`
+	Memory        uint64        `json:"memory"`
+	MemoryUsed    uint64        `json:"memoryused"`
+	ActiveApps    []SparkApp    `json:"activeapps"`
+	CompletedApps []SparkApp    `json:"completedapps"`
+	Status        string        `json:"status"`
+}
 
 // Supported cloud environments
 const (
@@ -57,7 +99,7 @@ func getAliveWorkerCount(sparkWebURL string) (int, error) {
 			return 0, err
 		}
 
-		var sparkClusterStatus spark_monitor.SparkClusterStatus
+		var sparkClusterStatus SparkClusterStatus
 
 		err = serializer.Deserialize(contents, &sparkClusterStatus)
 		if err != nil {

@@ -1,12 +1,12 @@
 package datastore
 
 import (
-	"allspark_config"
+	"daemon"
 	"testing"
 )
 
 func TestGetRedisClient(t *testing.T) {
-	allspark_config.Init("../allspark_config/allspark_config.json")
+	daemon.Init("../daemon/allspark_config.json")
 	client := GetRedisClient()
 	if client == nil {
 		t.Fatal("redis client object is nil")

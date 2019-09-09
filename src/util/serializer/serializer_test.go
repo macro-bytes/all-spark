@@ -2,15 +2,16 @@ package serializer_test
 
 import (
 	"cloud"
-	"spark_monitor"
+	"monitor"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 	"util/serializer"
 )
 
 func TestDeserializePath(t *testing.T) {
 	var template cloud.DockerEnvironment
-
 	err := serializer.DeserializePath("does-not-exist", &template)
 	if err == nil {
 		t.Error("Expected non-nil error")
@@ -22,7 +23,49 @@ func TestDeserializePath(t *testing.T) {
 	}
 }
 
-func TestSerializeAndDeserialize(t *testing.T) {
+func TestSerializeAndDeserializeEpochStatus(t *testing.T) {
+	var dummyClient cloud.AwsEnvironment
+	err := serializer.DeserializePath("../../../sample_templates/aws.json", &dummyClient)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(dummyClient)
+	if err != nil {
+		t.Error(err)
+	}
+
+	state := monitor.SparkClusterStatusAtEpoch{
+		Client:           serlializedClient,
+		Status:           monitor.StatusPending,
+		CloudEnvironment: cloud.Aws,
+		Timestamp:        time.Now().Unix(),
+	}
+
+	serializedState, err := serializer.Serialize(state)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var stateTest monitor.SparkClusterStatusAtEpoch
+	serializer.Deserialize(serializedState, &stateTest)
+
+	if !reflect.DeepEqual(stateTest, state) {
+		t.Error("deserialization failed")
+	}
+
+	var clientTest cloud.AwsEnvironment
+	err = serializer.Deserialize(stateTest.Client, &clientTest)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(clientTest, dummyClient) {
+		t.Error("deserialization failed")
+	}
+}
+
+func TestSerializeAndDeserializeClusterStatus(t *testing.T) {
 	buffer := `{
 "url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
 "workers":[{
@@ -72,7 +115,7 @@ func TestSerializeAndDeserialize(t *testing.T) {
 "status":"ALIVE"
 }`
 
-	var clusterStatus spark_monitor.SparkClusterStatus
+	var clusterStatus cloud.SparkClusterStatus
 	err := serializer.Deserialize([]byte(buffer), &clusterStatus)
 	if err != nil {
 		t.Fatal(err)

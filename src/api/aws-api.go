@@ -4,7 +4,10 @@ import (
 	"cloud"
 	"encoding/json"
 	"errors"
+	"log"
+	"monitor"
 	"net/http"
+	"util/serializer"
 )
 
 func validateAwsTemplate(template cloud.AwsEnvironment) error {
@@ -23,12 +26,10 @@ func validateAwsTemplate(template cloud.AwsEnvironment) error {
 	return nil
 }
 
-func createClusterAws(w http.ResponseWriter, r *http.Request) {
+func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 	err := validatePostRequest(r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -36,19 +37,25 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 
 	err = decoder.Decode(&template)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
+		return nil, err
 	}
 
 	err = validateAwsTemplate(template)
+	if err != nil {
+		return nil, err
+	}
+
+	return &template, nil
+}
+
+func createClusterAws(w http.ResponseWriter, r *http.Request) {
+	client, err := validateAwsFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	client := &template
 	_, err = client.CreateCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -56,36 +63,25 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		log.Println(err)
+	}
+
+	monitor.RegisterCluster(client.ClusterID, cloud.Aws, serializedClient)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully launched cluster"))
 }
 
 func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
-	err := validatePostRequest(r)
+	client, err := validateAwsFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	var template cloud.AwsEnvironment
-
-	err = decoder.Decode(&template)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	err = validateAwsTemplate(template)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	client := &template
 	err = client.DestroyCluster()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -93,6 +89,7 @@ func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	monitor.DeregisterCluster(client.ClusterID)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully destroyed cluster"))
 }
