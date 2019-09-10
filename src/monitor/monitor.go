@@ -5,7 +5,6 @@ import (
 	"datastore"
 	"log"
 	"os"
-	"strconv"
 	"time"
 	"util/serializer"
 )
@@ -30,15 +29,19 @@ type SparkClusterStatusAtEpoch struct {
 }
 
 // HandleCheckIn - handles spark monitor check-in http requests
-func HandleCheckIn(clusterID string, clusterStatus []byte, serializedClient []byte) {
-	log.Printf("cluster: %s, status: %s", clusterID, string(clusterStatus))
-	var reportedStatus cloud.SparkClusterStatus
-	serializer.Deserialize(clusterStatus, &reportedStatus)
+func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
+	log.Printf("cluster: %v, status: %+v", clusterID, clusterStatus)
+
+	priorClusterState, err := getLastEpoch(clusterID)
+	if err != nil {
+		log.Println(err)
+	}
 
 	epochStatus := SparkClusterStatusAtEpoch{
-		Timestamp: getTimestamp(),
-		Status:    getReportedStatus(reportedStatus),
-		Client:    serializedClient,
+		Timestamp:        getTimestamp(),
+		Status:           getReportedStatus(clusterStatus),
+		Client:           priorClusterState.Client,
+		CloudEnvironment: priorClusterState.CloudEnvironment,
 	}
 
 	setStatus(clusterID, epochStatus)
@@ -72,18 +75,26 @@ func getReportedStatus(status cloud.SparkClusterStatus) string {
 	return StatusIdle
 }
 
-func getPriorStatus(clusterID string) string {
+func getLastEpoch(clusterID string) (SparkClusterStatusAtEpoch, error) {
 	client := datastore.GetRedisClient()
 	defer client.Close()
 
 	var clusterState SparkClusterStatusAtEpoch
 	err := serializer.Deserialize([]byte(client.HGet(statusMap, clusterID).Val()),
 		&clusterState)
-	if err == nil {
-		return clusterState.Status
+	if err != nil {
+		return clusterState, err
 	}
 
-	return StatusUnknown
+	return clusterState, nil
+}
+
+func getLastKnownStatus(clusterID string) string {
+	clusterState, err := getLastEpoch(clusterID)
+	if err != nil {
+		return StatusUnknown
+	}
+	return clusterState.Status
 }
 
 func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
@@ -181,8 +192,4 @@ func acquireLock() bool {
 
 func getTimestamp() int64 {
 	return time.Now().Unix()
-}
-
-func getTimestampAsString() string {
-	return strconv.FormatInt(time.Now().Unix(), 10)
 }

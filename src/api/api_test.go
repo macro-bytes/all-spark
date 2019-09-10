@@ -70,6 +70,13 @@ func testHTTPRequest(t *testing.T,
 	}
 }
 
+func TestCheckin(t *testing.T) {
+	testHTTPRequest(t, checkIn, "GET",
+		"/aws/checkIn", nil, http.StatusBadRequest)
+	testHTTPRequest(t, checkIn, "POST",
+		"/aws/checkIn", nil, http.StatusBadRequest)
+}
+
 func TestCreateAndDestroyClusterAWS(t *testing.T) {
 	testHTTPRequest(t, createClusterAws, "GET",
 		"/aws/createCluster", nil, http.StatusBadRequest)

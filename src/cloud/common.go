@@ -54,6 +54,12 @@ type SparkClusterStatus struct {
 	Status        string        `json:"status"`
 }
 
+// SparkStatusCheckIn - form body for the /checkin endpoint
+type SparkStatusCheckIn struct {
+	Status    SparkClusterStatus
+	ClusterID string
+}
+
 // Supported cloud environments
 const (
 	Aws    = "aws"
