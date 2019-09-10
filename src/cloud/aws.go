@@ -25,6 +25,7 @@ type AwsEnvironment struct {
 	Region           string
 	IAMRole          string
 	KeyName          string
+	MetaData         string
 }
 
 func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
@@ -121,7 +122,8 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
 	userData := "export EXPECTED_WORKERS=" + workers +
 		"\nexport CLUSTER_ID=" + e.ClusterID +
-		"\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL
+		"\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL +
+		"\nexport META_DATA=" + e.MetaData
 
 	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)
 	if err != nil {

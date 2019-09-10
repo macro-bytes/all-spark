@@ -10,5 +10,6 @@
     "WorkerNodes":
          3,
     "Image":
-        "macrobytes/allspark-base-image:latest"
+        "macrobytes/allspark-base-image:latest",
+    "MetaData": "{\"meta-data-key\":\"meta-data-value\"}"
 }

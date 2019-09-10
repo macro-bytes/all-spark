@@ -19,5 +19,6 @@
     "IAMRole":
         "AmazonS3FullAccess",
     "KeyName":
-        "wp-1"
+        "wp-1",
+    "MetaData": "{\"meta-data-key\":\"meta-data-value\"}"
 }

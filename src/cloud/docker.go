@@ -23,6 +23,7 @@ type DockerEnvironment struct {
 	ClusterID   string
 	WorkerNodes int
 	Image       string
+	MetaData    string
 }
 
 func (e *DockerEnvironment) getDockerClient() *client.Client {
@@ -51,7 +52,8 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
 		env := []string{"MASTER_IP=" + masterIP,
 			"CLUSTER_ID=" + e.ClusterID,
-			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL}
+			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL,
+			"META_DATA=" + e.MetaData}
 		for i := 1; i <= e.WorkerNodes; i++ {
 			identifier := e.ClusterID + workerIdentifier + strconv.Itoa(i)
 			e.createSparkNode(identifier, env)
