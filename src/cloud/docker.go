@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"context"
+	"daemon"
 	"log"
 	"strconv"
 	"time"
@@ -48,7 +49,9 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
-		env := []string{"MASTER_IP=" + masterIP}
+		env := []string{"MASTER_IP=" + masterIP,
+			"CLUSTER_ID=" + e.ClusterID,
+			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL}
 		for i := 1; i <= e.WorkerNodes; i++ {
 			identifier := e.ClusterID + workerIdentifier + strconv.Itoa(i)
 			e.createSparkNode(identifier, env)

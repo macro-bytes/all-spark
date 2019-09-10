@@ -8,5 +8,7 @@
     "ClusterMaxRuntime":
         3600,
     "CloudEnvironment":
-        "aws"
+        "aws",
+    "CallbackURL":
+        ""
 }

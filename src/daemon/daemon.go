@@ -13,6 +13,7 @@ type AllSparkConfig struct {
 	ClusterIdleTimeout    int64
 	ClusterMaxRuntime     int64
 	CloudEnvironment      string
+	CallbackURL           string
 }
 
 var config AllSparkConfig

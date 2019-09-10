@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"daemon"
 	b64 "encoding/base64"
 	"log"
 	"strconv"
@@ -118,7 +119,9 @@ func (e *AwsEnvironment) getPublicIP(instanceID string) (string, error) {
 func (e *AwsEnvironment) launchMaster() (string, string, error) {
 
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
-	userData := "export EXPECTED_WORKERS=" + workers
+	userData := "export EXPECTED_WORKERS=" + workers +
+		"\nexport CLUSTER_ID=" + e.ClusterID +
+		"\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL
 
 	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)
 	if err != nil {
