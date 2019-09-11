@@ -6,14 +6,14 @@ import (
 	"api"
 	"cloud"
 	"daemon"
-	"log"
+	"logger"
 	"monitor"
 	"os"
 )
 
 func main() {
 	if len(os.Args) <= 1 {
-		log.Panic("usage: allspark-orchestrator /path/to/allspark_config.json")
+		logger.Fatal("usage: allspark-orchestrator /path/to/allspark_config.json")
 		os.Exit(1)
 	}
 
@@ -29,6 +29,6 @@ func main() {
 	case cloud.Docker:
 		api.InitDockerAPI()
 	default:
-		log.Panic("invalid cloud environment specified")
+		logger.Fatal("invalid cloud environment specified")
 	}
 }

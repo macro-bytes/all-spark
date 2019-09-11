@@ -3,7 +3,7 @@ package cloud
 import (
 	"context"
 	"daemon"
-	"log"
+	"logger"
 	"strconv"
 	"time"
 	"util/netutil"
@@ -30,7 +30,7 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
 	}
 	cli.NegotiateAPIVersion(ctx)
 	return cli
@@ -45,12 +45,12 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL,
 			"META_DATA=" + e.MetaData})
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
 	}
 
 	masterIP, err := e.getIPAddress(containerID, e.Network)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err.Error())
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
@@ -60,7 +60,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 			e.createSparkNode(identifier, env)
 		}
 	} else {
-		log.Fatal("master node has failed to come online")
+		logger.Fatal("master node has failed to come online")
 	}
 
 	webURL := "http://" + masterIP + ":8080"

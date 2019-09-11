@@ -6,7 +6,7 @@ import (
 	"cloud"
 	"flag"
 	"fmt"
-	"log"
+	"logger"
 	"os"
 	"time"
 )
@@ -28,27 +28,27 @@ func handleCreateCluster(options *flag.FlagSet,
 	cloudEnvironment string, templatePath string) {
 	handleErrors(options, cloudEnvironment, templatePath)
 
-	log.Printf("Launching spark cluster (note: this may take approximately 45 seconds).")
+	logger.Info("Launching spark cluster (note: this may take approximately 45 seconds).")
 	start := time.Now().Unix()
 
 	templateConfig, err := cloud.ReadTemplateConfiguration(templatePath)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	client, err := cloud.Create(cloudEnvironment, templateConfig)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	url, err := client.CreateCluster()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	end := time.Now().Unix()
-	log.Printf("Cluster is online after %v seconds\n", (end - start))
-	log.Printf("Master URL: " + url)
+	logger.Info("Cluster is online after %v seconds\n", (end - start))
+	logger.Info("Master URL: " + url)
 }
 
 func handleDestroyCluster(options *flag.FlagSet,
@@ -57,12 +57,12 @@ func handleDestroyCluster(options *flag.FlagSet,
 
 	templateConfig, err := cloud.ReadTemplateConfiguration(templatePath)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	client, err := cloud.Create(cloudEnvironment, templateConfig)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 	client.DestroyCluster()
 }

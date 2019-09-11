@@ -4,15 +4,13 @@ import (
 	"cloud"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
+	"logger"
 	"monitor"
 	"net/http"
 	"util/serializer"
 )
 
 func validateDockerTemplate(template cloud.DockerEnvironment) error {
-	fmt.Println("HOLY FUCKING SHIT!!!!")
 	if len(template.ClusterID) == 0 ||
 		template.MemBytes < 10 ||
 		template.NanoCpus < 10 ||
@@ -64,7 +62,7 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 
 	serializedClient, err := serializer.Serialize(client)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 	}
 
 	monitor.RegisterCluster(client.ClusterID, cloud.Docker, serializedClient)

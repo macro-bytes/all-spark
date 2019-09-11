@@ -3,7 +3,7 @@ package cloud
 import (
 	"daemon"
 	b64 "encoding/base64"
-	"log"
+	"logger"
 	"strconv"
 	"time"
 	"util/netutil"
@@ -34,7 +34,7 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	)
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 
 	return ec2.New(sess)
@@ -157,7 +157,7 @@ func (e *AwsEnvironment) CreateCluster() (string, error) {
 	}
 
 	if netutil.IsListeningOnPort(publicIP, 8080, 1*time.Second, 60) {
-		log.Println("spark master node is online")
+		logger.Info("spark master node is online")
 	}
 
 	webURL := "http://" + publicIP + ":8080"

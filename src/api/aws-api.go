@@ -4,7 +4,7 @@ import (
 	"cloud"
 	"encoding/json"
 	"errors"
-	"log"
+	"logger"
 	"monitor"
 	"net/http"
 	"util/serializer"
@@ -65,7 +65,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 
 	serializedClient, err := serializer.Serialize(client)
 	if err != nil {
-		log.Println(err)
+		logger.Error(err.Error())
 	}
 
 	monitor.RegisterCluster(client.ClusterID, cloud.Aws, serializedClient)

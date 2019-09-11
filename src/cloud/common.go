@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"log"
+	"logger"
 	"net/http"
 	"os"
 	"time"
@@ -121,7 +121,7 @@ func getAliveWorkerCount(sparkWebURL string) (int, error) {
 func ReadTemplateConfiguration(path string) ([]byte, error) {
 	template, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 	defer template.Close()
 
@@ -142,7 +142,7 @@ func Create(environment string, clusterConfiguration []byte) (CloudEnvironment, 
 		err := json.Unmarshal(clusterConfiguration, &result)
 		return &result, err
 	default:
-		log.Fatal("invalid cloud-environment " + environment)
+		logger.Fatal("invalid cloud-environment " + environment)
 	}
 
 	return nil, nil

@@ -1,7 +1,7 @@
 package daemon
 
 import (
-	"log"
+	"logger"
 	"util/serializer"
 )
 
@@ -22,7 +22,7 @@ var config AllSparkConfig
 func Init(path string) {
 	err := serializer.DeserializePath(path, &config)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())
 	}
 }
 
