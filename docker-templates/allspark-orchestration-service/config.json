@@ -1,0 +1,14 @@
+{
+    "RedisHost":
+        "localhost:6379",
+    "ClusterPendingTimeout":
+        600,
+    "ClusterIdleTimeout":
+        600,
+    "ClusterMaxRuntime":
+        3600,
+    "CloudEnvironment":
+        "docker",
+    "CallbackURL":
+        "http://localhost:32418/docker/checkIn"
+}

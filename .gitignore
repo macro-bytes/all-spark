@@ -8,4 +8,4 @@ src/github.com
 src/golang.org
 src/google.golang.org
 src/go.opencensus.io
-
+*.pyc

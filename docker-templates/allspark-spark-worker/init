@@ -1,0 +1,40 @@
+#!/bin/bash
+
+function wait_for_spark_master {
+    while true; do
+        ALIVE_WORKERS=`nc -z $MASTER_IP 7077`
+        if [ "$?" == "0" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function wait_for_spark_cluster {
+    while true; do
+        ALIVE_WORKERS=`curl -s http://localhost:8080/json/ | jq .aliveworkers`
+        if [ "$ALIVE_WORKERS" == "$EXPECTED_WORKERS" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+if [ -z $MASTER_IP ]; then
+    $SPARK_HOME/sbin/start-master.sh
+    wait_for_spark_cluster
+    /allspark/run_monitor.py &
+    /allspark/run
+else
+    wait_for_spark_master
+    $SPARK_HOME/sbin/start-slave.sh "spark://$MASTER_IP:7077"
+fi
+
+while true; do
+
+    pgrep -f hadoop
+    if [ "$?" != "0" ]; then
+        break
+    fi
+    sleep 10
+done
