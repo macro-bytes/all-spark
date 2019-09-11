@@ -4,6 +4,7 @@ import (
 	"cloud"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"monitor"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 )
 
 func validateDockerTemplate(template cloud.DockerEnvironment) error {
+	fmt.Println("HOLY FUCKING SHIT!!!!")
 	if len(template.ClusterID) == 0 ||
 		template.MemBytes < 10 ||
 		template.NanoCpus < 10 ||
@@ -94,8 +96,8 @@ func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
 
 // InitDockerAPI - Initialize the Docker REST API
 func InitDockerAPI() {
-	http.HandleFunc("/docker/createCluster", createClusterAws)
-	http.HandleFunc("/docker/destroyCluster", destroyClusterAws)
+	http.HandleFunc("/docker/createCluster", createClusterDocker)
+	http.HandleFunc("/docker/destroyCluster", destroyClusterDocker)
 	http.HandleFunc("/docker/checkIn", checkIn)
 	http.ListenAndServe(":32418", nil)
 }

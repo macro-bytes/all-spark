@@ -23,6 +23,7 @@ function wait_for_spark_cluster {
 if [ -z $MASTER_IP ]; then
     $SPARK_HOME/sbin/start-master.sh
     wait_for_spark_cluster
+    /allspark/run_monitor.py &
     /allspark/run
 else
     wait_for_spark_master

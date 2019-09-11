@@ -3,6 +3,7 @@
 import os
 import requests
 import time
+import json
 
 def run_monitor(cluster_id, callback_url):
     spark_status_url = "http://localhost:8080/json/"
@@ -16,7 +17,7 @@ def run_monitor(cluster_id, callback_url):
         }
 
         requests.post(url=callback_url,
-                      data=data)
+                      data=json.dumps(data))
         
         time.sleep(10)
 

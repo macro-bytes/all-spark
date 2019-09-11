@@ -8,7 +8,7 @@
     "ClusterMaxRuntime":
         3600,
     "CloudEnvironment":
-        "aws",
+        "docker",
     "CallbackURL":
-        ""
+        "http://10.11.1.93:32418/docker/checkIn"
 }

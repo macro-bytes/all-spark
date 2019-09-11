@@ -118,6 +118,7 @@ func Run(iterations int, maxRuntime int64,
 	if iterations <= 0 {
 		for {
 			if acquireLock() {
+				log.Println("acquired lock")
 				monitorClusterHelper(maxRuntime, idleTimeout, pendingTimeout)
 				releaseLock()
 			}

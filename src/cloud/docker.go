@@ -39,7 +39,11 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 // CreateCluster - creates a spark cluster in docker
 func (e *DockerEnvironment) CreateCluster() (string, error) {
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(e.WorkerNodes)
-	containerID, err := e.createSparkNode(e.ClusterID+masterIdentifier, []string{expectedWorkers})
+	containerID, err := e.createSparkNode(e.ClusterID+masterIdentifier,
+		[]string{expectedWorkers,
+			"CLUSTER_ID=" + e.ClusterID,
+			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL,
+			"META_DATA=" + e.MetaData})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,10 +54,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
-		env := []string{"MASTER_IP=" + masterIP,
-			"CLUSTER_ID=" + e.ClusterID,
-			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL,
-			"META_DATA=" + e.MetaData}
+		env := []string{"MASTER_IP=" + masterIP}
 		for i := 1; i <= e.WorkerNodes; i++ {
 			identifier := e.ClusterID + workerIdentifier + strconv.Itoa(i)
 			e.createSparkNode(identifier, env)

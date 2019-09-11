@@ -18,10 +18,10 @@ func main() {
 	}
 
 	daemon.Init(os.Args[1])
-	go monitor.MonitorSparkClusters(-1,
+	go monitor.Run(-1,
 		daemon.GetAllSparkConfig().ClusterMaxRuntime,
-		daemon.GetAllSparkConfig().ClusterMaxRuntime,
-		daemon.GetAllSparkConfig().ClusterIdleTimeout)
+		daemon.GetAllSparkConfig().ClusterIdleTimeout,
+		daemon.GetAllSparkConfig().ClusterPendingTimeout)
 
 	switch daemon.GetAllSparkConfig().CloudEnvironment {
 	case cloud.Aws:
