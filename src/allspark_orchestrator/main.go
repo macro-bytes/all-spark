@@ -12,7 +12,7 @@ import (
 
 func main() {
 	if len(os.Args) <= 1 {
-		logger.Fatal("usage: allspark-orchestrator /path/to/allspark_config.json")
+		logger.GetFatal().Fatalln("usage: allspark-orchestrator /path/to/allspark_config.json")
 		os.Exit(1)
 	}
 

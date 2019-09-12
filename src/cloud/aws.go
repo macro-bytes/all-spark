@@ -34,7 +34,7 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	)
 
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.GetFatal().Fatalln(err)
 	}
 
 	return ec2.New(sess)
@@ -122,8 +122,11 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
 	userData := "export EXPECTED_WORKERS=" + workers +
 		"\nexport CLUSTER_ID=" + e.ClusterID +
-		"\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL +
 		"\nexport META_DATA=" + e.MetaData
+
+	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
+		userData += "\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL
+	}
 
 	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)
 	if err != nil {
@@ -157,7 +160,7 @@ func (e *AwsEnvironment) CreateCluster() (string, error) {
 	}
 
 	if netutil.IsListeningOnPort(publicIP, 8080, 1*time.Second, 60) {
-		logger.Info("spark master node is online")
+		logger.GetInfo().Println("spark master node is online")
 	}
 
 	webURL := "http://" + publicIP + ":8080"

@@ -5,20 +5,17 @@ import (
 	"os"
 )
 
-// Info - logs informational messages to STDOUT
-func Info(format string, v ...interface{}) {
-	l := log.New(os.Stdout, "INFO: ", log.Llongfile)
-	l.Printf(format + "\n")
+// GetInfo - logs informational messages to STDOUT
+func GetInfo() *log.Logger {
+	return log.New(os.Stdout, "INFO: ", log.Lshortfile)
 }
 
-// Error - logs error message to STDERR
-func Error(format string, v ...interface{}) {
-	l := log.New(os.Stderr, "ERROR: ", log.Llongfile)
-	l.Printf(format + "\n")
+// GetError - logs error message to STDERR
+func GetError() *log.Logger {
+	return log.New(os.Stderr, "ERROR: ", log.Lshortfile)
 }
 
-// Fatal - logs fatal error message to STDERR and exits
-func Fatal(format string, v ...interface{}) {
-	l := log.New(os.Stderr, "FATAL: ", log.Llongfile)
-	l.Fatalf(format + "\n")
+// GetFatal - logs fatal error message to STDERR and exits
+func GetFatal() *log.Logger {
+	return log.New(os.Stderr, "FATAL: ", log.Lshortfile)
 }

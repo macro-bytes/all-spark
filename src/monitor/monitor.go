@@ -30,11 +30,11 @@ type SparkClusterStatusAtEpoch struct {
 
 // HandleCheckIn - handles spark monitor check-in http requests
 func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
-	logger.Info("cluster: %v, status: %+v", clusterID, clusterStatus)
+	logger.GetInfo().Printf("cluster: %v, status: %+v", clusterID, clusterStatus)
 
 	priorClusterState, err := getLastEpoch(clusterID)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 	}
 
 	epochStatus := SparkClusterStatusAtEpoch{
@@ -104,7 +104,7 @@ func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
 
 	result, err := serializer.Serialize(status)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 	}
 
 	client.HSet(statusMap, clusterID, string(result))
@@ -119,7 +119,7 @@ func Run(iterations int, maxRuntime int64,
 	if iterations <= 0 {
 		for {
 			if acquireLock() {
-				logger.Info("acquired lock")
+				logger.GetInfo().Println("acquired lock")
 				monitorClusterHelper(maxRuntime, idleTimeout, pendingTimeout)
 				releaseLock()
 			}
@@ -145,7 +145,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64, pendingTimeout in
 
 		client, err := cloud.Create(status.CloudEnvironment, status.Client)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.GetError().Println(err)
 		}
 
 		currentTime := getTimestamp()
@@ -185,7 +185,7 @@ func acquireLock() bool {
 
 	id, err := os.Hostname()
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 		return false
 	}
 

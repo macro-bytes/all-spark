@@ -2,7 +2,7 @@
     "ClusterID":
         "aws-spark-cluster",
     "ImageID":
-        "ami-0ac6a519e6040877a",
+        "ami-02cd2d612efa68f5b",
     "InstanceType":
         "m5.2xlarge",
     "EBSVolumeSize":
@@ -20,5 +20,5 @@
         "AmazonS3FullAccess",
     "KeyName":
         "wp-1",
-    "MetaData": "{\"meta-data-key\":\"meta-data-value\"}"
+    "MetaData": "'{\"meta-data-key\":\"meta-data-value\"}'"
 }

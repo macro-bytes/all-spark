@@ -11,5 +11,5 @@
          3,
     "Image":
         "macrobytes/allspark-base-image:latest",
-    "MetaData": "{\"meta-data-key\":\"meta-data-value\"}"
+    "MetaData": "'{\"meta-data-key\":\"meta-data-value\"}'"
 }

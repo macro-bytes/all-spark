@@ -57,7 +57,7 @@ func TestHandleCheckinIdle(t *testing.T) {
 "status":"ALIVE"
 }`
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -133,7 +133,7 @@ func TestHandleCheckinRunning(t *testing.T) {
 "status":"ALIVE"
 }`
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -161,7 +161,7 @@ func TestHandleCheckinRunning(t *testing.T) {
 
 func TestPendingTimeoutMonitor(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -192,7 +192,7 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 
 func TestIdleTimeoutMonitor(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -228,7 +228,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 
 func TestMaxRuntime(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}

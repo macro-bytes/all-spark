@@ -30,7 +30,7 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 	}
 	cli.NegotiateAPIVersion(ctx)
 	return cli
@@ -39,18 +39,27 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 // CreateCluster - creates a spark cluster in docker
 func (e *DockerEnvironment) CreateCluster() (string, error) {
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(e.WorkerNodes)
-	containerID, err := e.createSparkNode(e.ClusterID+masterIdentifier,
-		[]string{expectedWorkers,
+
+	var envVariables []string
+	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
+		envVariables = []string{expectedWorkers,
 			"CLUSTER_ID=" + e.ClusterID,
 			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL,
-			"META_DATA=" + e.MetaData})
+			"META_DATA=" + e.MetaData}
+	} else {
+		envVariables = []string{expectedWorkers,
+			"CLUSTER_ID=" + e.ClusterID,
+			"META_DATA=" + e.MetaData}
+	}
+
+	containerID, err := e.createSparkNode(e.ClusterID+masterIdentifier, envVariables)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 	}
 
 	masterIP, err := e.getIPAddress(containerID, e.Network)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
@@ -60,7 +69,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 			e.createSparkNode(identifier, env)
 		}
 	} else {
-		logger.Fatal("master node has failed to come online")
+		logger.GetFatal().Fatalln("master node has failed to come online")
 	}
 
 	webURL := "http://" + masterIP + ":8080"

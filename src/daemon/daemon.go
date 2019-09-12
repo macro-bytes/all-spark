@@ -22,7 +22,7 @@ var config AllSparkConfig
 func Init(path string) {
 	err := serializer.DeserializePath(path, &config)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.GetFatal().Fatalln(err)
 	}
 }
 

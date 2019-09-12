@@ -24,7 +24,7 @@ func createBadFormDataAws() []byte {
 
 func createValidFormDataAws() []byte {
 	var template cloud.AwsEnvironment
-	serializer.DeserializePath("../../sample_templates/aws.json",
+	serializer.DeserializePath("../../dist/sample_templates/aws.json",
 		&template)
 
 	buff, _ := json.Marshal(template)
@@ -43,7 +43,7 @@ func createBadFormDataDocker() []byte {
 
 func createValidFormDataDocker() []byte {
 	var template cloud.DockerEnvironment
-	serializer.DeserializePath("../../sample_templates/docker.json",
+	serializer.DeserializePath("../../dist/sample_templates/docker.json",
 		&template)
 
 	buff, _ := json.Marshal(template)

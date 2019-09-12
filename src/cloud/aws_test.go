@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	awsTemplatePath = "../../sample_templates/aws.json"
+	awsTemplatePath = "../../dist/sample_templates/aws.json"
 )
 
 func getAwsClient(t *testing.T) CloudEnvironment {

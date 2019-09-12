@@ -65,7 +65,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 
 	serializedClient, err := serializer.Serialize(client)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.GetError().Println(err)
 	}
 
 	monitor.RegisterCluster(client.ClusterID, cloud.Aws, serializedClient)

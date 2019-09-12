@@ -70,7 +70,7 @@ func Init() {
 	case cloud.Docker:
 		InitDockerAPI()
 	default:
-		logger.Fatal("invalid cloud environment specified")
+		logger.GetFatal().Fatalln("invalid cloud environment specified")
 	}
 
 	http.HandleFunc("/checkIn", checkIn)

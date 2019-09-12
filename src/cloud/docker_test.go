@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	dockerTemplatePath = "../../sample_templates/docker.json"
+	dockerTemplatePath = "../../dist/sample_templates/docker.json"
 )
 
 func getDockerClient(t *testing.T) CloudEnvironment {

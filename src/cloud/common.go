@@ -121,7 +121,7 @@ func getAliveWorkerCount(sparkWebURL string) (int, error) {
 func ReadTemplateConfiguration(path string) ([]byte, error) {
 	template, err := os.Open(path)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.GetFatal().Fatalln(err)
 	}
 	defer template.Close()
 
@@ -142,7 +142,7 @@ func Create(environment string, clusterConfiguration []byte) (CloudEnvironment, 
 		err := json.Unmarshal(clusterConfiguration, &result)
 		return &result, err
 	default:
-		logger.Fatal("invalid cloud-environment " + environment)
+		logger.GetFatal().Fatalln("invalid cloud-environment " + environment)
 	}
 
 	return nil, nil

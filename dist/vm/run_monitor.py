@@ -1,0 +1,1 @@
+../docker-templates/allspark-spark-worker/run_monitor.py
