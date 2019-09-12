@@ -2,7 +2,7 @@
     "ClusterID":
         "aws-spark-cluster",
     "ImageID":
-        "ami-02cd2d612efa68f5b",
+        "ami-0852d6d988d7ca807",
     "InstanceType":
         "m5.2xlarge",
     "EBSVolumeSize":

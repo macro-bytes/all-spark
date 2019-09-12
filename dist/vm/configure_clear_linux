@@ -4,12 +4,16 @@ function clean_up {
     rm -Rf /allspark/allspark-orchestrator
     rm /allspark/spark-2.4.4-bin-hadoop2.7.tgz
     rm /allspark/sparkling-water-2.4.13.zip
-    rm /allspark/rm zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz
+    rm /allspark/zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz
+    rm /home/clear/.ssh/authorized_keys
+    rm /var/lib/cloud/*
 }
 
 function enable_services {
+    systemctl start rpcbind
+    systemctl start nfs-server
     systemctl enable allspark
-    systemctl enable rpc-bind
+    systemctl enable rpcbind
     systemctl enable nfs-server
 }
 
@@ -25,17 +29,16 @@ function install_ml_tools {
 }
 
 function configure_allspark {
-    sudo mkdir /shared
+    mkdir /shared
     chmod 777 /shared
 
-    sudo mkdir /allspark
+    mkdir /allspark
     cd /allspark 
     git clone https://github.com/macrobytes/allspark-orchestrator.git
     DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
     
-    pip install -r $DATA_PATH/requirements.txt
     cp $DATA_PATH/allspark.service /usr/lib/systemd/system
-    cp $DATA_PATH/exports /usr/lib/systemd/exports
+    cp $DATA_PATH/exports /etc/exports
     cp $DATA_PATH/init /allspark
     cp $DATA_PATH/run /allspark
     cp $DATA_PATH/run_monitor.py /allspark
@@ -43,6 +46,15 @@ function configure_allspark {
     chmod +x /allspark/run_monitor.py
     chmod +x /allspark/run
     chmod +x /allspark/init
+}
+
+function install_python_packages {
+    pip install tensorflow \
+        tensorflowonspark \
+        h2o \
+        h2o-pysparkling-2.4 \
+        pyspark \
+        mlflow
 }
 
 function install_bundles {
@@ -84,7 +96,6 @@ function install_bundles {
         polkit \
         python3-basic \
         sqlite \
-        sudo \
         syslinux \
         systemd-networkd-autostart \
         tmux \
@@ -97,6 +108,8 @@ function install_bundles {
 }
 
 install_bundles
+install_python_packages
 configure_allspark
 install_ml_tools
+enable_services
 clean_up
