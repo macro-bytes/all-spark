@@ -4,7 +4,6 @@ package main
 
 import (
 	"api"
-	"cloud"
 	"daemon"
 	"logger"
 	"monitor"
@@ -23,12 +22,5 @@ func main() {
 		daemon.GetAllSparkConfig().ClusterIdleTimeout,
 		daemon.GetAllSparkConfig().ClusterPendingTimeout)
 
-	switch daemon.GetAllSparkConfig().CloudEnvironment {
-	case cloud.Aws:
-		api.InitAwsAPI()
-	case cloud.Docker:
-		api.InitDockerAPI()
-	default:
-		logger.Fatal("invalid cloud environment specified")
-	}
+	api.Init()
 }

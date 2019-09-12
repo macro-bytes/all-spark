@@ -72,9 +72,18 @@ func testHTTPRequest(t *testing.T,
 
 func TestCheckin(t *testing.T) {
 	testHTTPRequest(t, checkIn, "GET",
-		"/aws/checkIn", nil, http.StatusBadRequest)
+		"/checkIn", nil, http.StatusBadRequest)
 	testHTTPRequest(t, checkIn, "POST",
-		"/aws/checkIn", nil, http.StatusBadRequest)
+		"/checkIn", nil, http.StatusBadRequest)
+}
+
+func TestGetStatus(t *testing.T) {
+	testHTTPRequest(t, getStatus, "POST",
+		"/getStatus", nil, http.StatusBadRequest)
+	testHTTPRequest(t, getStatus, "GET",
+		"/getStatus", nil, http.StatusBadRequest)
+	testHTTPRequest(t, getStatus, "GET",
+		"/getStatus?clusterID=test", nil, http.StatusOK)
 }
 
 func TestCreateAndDestroyClusterAWS(t *testing.T) {

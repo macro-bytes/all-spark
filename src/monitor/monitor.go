@@ -89,7 +89,8 @@ func getLastEpoch(clusterID string) (SparkClusterStatusAtEpoch, error) {
 	return clusterState, nil
 }
 
-func getLastKnownStatus(clusterID string) string {
+// GetLastKnownStatus - returns the last known status of the cluster
+func GetLastKnownStatus(clusterID string) string {
 	clusterState, err := getLastEpoch(clusterID)
 	if err != nil {
 		return StatusUnknown

@@ -27,7 +27,7 @@ func validateAwsTemplate(template cloud.AwsEnvironment) error {
 }
 
 func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
-	err := validatePostRequest(r)
+	err := validateRequest(r, "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +98,4 @@ func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
 func InitAwsAPI() {
 	http.HandleFunc("/aws/createCluster", createClusterAws)
 	http.HandleFunc("/aws/destroyCluster", destroyClusterAws)
-	http.HandleFunc("/aws/checkIn", checkIn)
-	http.ListenAndServe(":32418", nil)
 }

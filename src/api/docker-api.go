@@ -24,7 +24,7 @@ func validateDockerTemplate(template cloud.DockerEnvironment) error {
 }
 
 func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
-	err := validatePostRequest(r)
+	err := validateRequest(r, "POST")
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +96,4 @@ func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
 func InitDockerAPI() {
 	http.HandleFunc("/docker/createCluster", createClusterDocker)
 	http.HandleFunc("/docker/destroyCluster", destroyClusterDocker)
-	http.HandleFunc("/docker/checkIn", checkIn)
-	http.ListenAndServe(":32418", nil)
 }

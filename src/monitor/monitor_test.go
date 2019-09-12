@@ -75,7 +75,7 @@ func TestHandleCheckinIdle(t *testing.T) {
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
 	HandleCheckIn(client.ClusterID, clusterStatus)
-	status := getLastKnownStatus(client.ClusterID)
+	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusIdle {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusIdle)
@@ -151,7 +151,7 @@ func TestHandleCheckinRunning(t *testing.T) {
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
 	HandleCheckIn(client.ClusterID, clusterStatus)
-	status := getLastKnownStatus(client.ClusterID)
+	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusRunning {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusRunning)
@@ -174,7 +174,7 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
 
 	Run(1, 9999, 9999, 5)
-	status := getLastKnownStatus(client.ClusterID)
+	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusPending {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusPending)
@@ -182,7 +182,7 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 	}
 
 	Run(1, 9999, 9999, 5)
-	status = getLastKnownStatus(client.ClusterID)
+	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusUnknown {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusUnknown)
@@ -210,7 +210,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 	})
 
 	Run(1, 9999, 5, 9999)
-	status := getLastKnownStatus(client.ClusterID)
+	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusIdle {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusIdle)
@@ -218,7 +218,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 	}
 
 	Run(1, 9999, 5, 9999)
-	status = getLastKnownStatus(client.ClusterID)
+	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusUnknown {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusUnknown)
@@ -246,7 +246,7 @@ func TestMaxRuntime(t *testing.T) {
 	})
 
 	Run(1, 5, 9999, 9999)
-	status := getLastKnownStatus(client.ClusterID)
+	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusRunning {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusRunning)
@@ -254,7 +254,7 @@ func TestMaxRuntime(t *testing.T) {
 	}
 
 	Run(1, 5, 9999, 9999)
-	status = getLastKnownStatus(client.ClusterID)
+	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusUnknown {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusUnknown)
