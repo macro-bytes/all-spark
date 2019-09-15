@@ -8,6 +8,8 @@ import (
 	"time"
 	"util/netutil"
 
+	"github.com/docker/docker/api/types/mount"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -24,6 +26,7 @@ type DockerEnvironment struct {
 	WorkerNodes int
 	Image       string
 	MetaData    string
+	Mounts      []mount.Mount
 }
 
 func (e *DockerEnvironment) getDockerClient() *client.Client {
@@ -146,6 +149,7 @@ func (e *DockerEnvironment) createSparkNode(identifier string,
 				Memory:   e.MemBytes,
 			},
 			NetworkMode: "all-spark-bridge",
+			Mounts:      e.Mounts,
 		},
 		&network.NetworkingConfig{},
 		identifier)
