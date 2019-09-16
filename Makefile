@@ -1,3 +1,5 @@
+export GOPATH=$(PWD)
+
 all: allspark_cli allspark_daemon
 
 allspark_daemon:
