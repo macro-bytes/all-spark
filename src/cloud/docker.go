@@ -27,6 +27,7 @@ type DockerEnvironment struct {
 	Image       string
 	MetaData    string
 	Mounts      []mount.Mount
+	EnvParams   []string
 }
 
 func (e *DockerEnvironment) getDockerClient() *client.Client {
@@ -54,6 +55,8 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 			"CLUSTER_ID=" + e.ClusterID,
 			"META_DATA=" + e.MetaData}
 	}
+
+	envVariables = append(envVariables, e.EnvParams...)
 
 	containerID, err := e.createSparkNode(e.ClusterID+masterIdentifier, envVariables)
 	if err != nil {
