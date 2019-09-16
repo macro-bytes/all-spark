@@ -8,7 +8,7 @@ allspark_daemon:
 allspark_cli:
 	go build -o allspark_cli --tags cli allspark_orchestrator
 
-install_prerequisites:
+install_prerequisites: # Todo: Migrate to Go Modules
 	go get github.com/docker/docker/client && \
 	go get github.com/aws/aws-sdk-go/... && \
 	go get -u github.com/Azure/azure-sdk-for-go/... && \
