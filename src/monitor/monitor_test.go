@@ -249,9 +249,9 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 
 	Run(1, 9999, 9999, 5)
 	status = GetLastKnownStatus(client.ClusterID)
-	if status != StatusUnknown {
+	if status != StatusNotRegistered {
 		t.Error("status mismatch")
-		t.Error("-expected: " + StatusUnknown)
+		t.Error("-expected: " + StatusNotRegistered)
 		t.Error("-actual: " + status)
 	}
 }
@@ -285,9 +285,9 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 
 	Run(1, 9999, 5, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
-	if status != StatusUnknown {
+	if status != StatusNotRegistered {
 		t.Error("status mismatch")
-		t.Error("-expected: " + StatusUnknown)
+		t.Error("-expected: " + StatusNotRegistered)
 		t.Error("-actual: " + status)
 	}
 }
@@ -321,9 +321,9 @@ func TestMaxRuntime(t *testing.T) {
 
 	Run(1, 5, 9999, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
-	if status != StatusUnknown {
+	if status != StatusNotRegistered {
 		t.Error("status mismatch")
-		t.Error("-expected: " + StatusUnknown)
+		t.Error("-expected: " + StatusNotRegistered)
 		t.Error("-actual: " + status)
 	}
 }

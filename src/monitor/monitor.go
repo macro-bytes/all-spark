@@ -11,13 +11,13 @@ import (
 
 // Spark cluster status constants
 const (
-	StatusUnknown = "UNKNOWN"
-	StatusPending = "PENDING"
-	StatusIdle    = "IDLE"
-	StatusRunning = "RUNNING"
-	StatusDone    = "DONE"
-	statusMap     = "STATUS_MAP"
-	monitorLock   = "MONITOR_LOCK"
+	StatusNotRegistered = "NOT_REGISTERED"
+	StatusPending       = "PENDING"
+	StatusIdle          = "IDLE"
+	StatusRunning       = "RUNNING"
+	StatusDone          = "DONE"
+	statusMap           = "STATUS_MAP"
+	monitorLock         = "MONITOR_LOCK"
 )
 
 // SparkClusterStatusAtEpoch describes the state of a cluster
@@ -96,7 +96,7 @@ func getLastEpoch(clusterID string) (SparkClusterStatusAtEpoch, error) {
 func GetLastKnownStatus(clusterID string) string {
 	clusterState, err := getLastEpoch(clusterID)
 	if err != nil {
-		return StatusUnknown
+		return StatusNotRegistered
 	}
 	return clusterState.Status
 }
@@ -170,6 +170,10 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64, pendingTimeout in
 				client.DestroyCluster()
 				DeregisterCluster(clusterID)
 			}
+			break
+		case StatusDone:
+			client.DestroyCluster()
+			DeregisterCluster(clusterID)
 			break
 		}
 	}
