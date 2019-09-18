@@ -4,6 +4,7 @@ import (
 	"context"
 	"daemon"
 	"logger"
+	"os"
 	"strconv"
 	"time"
 	"util/netutil"
@@ -45,16 +46,14 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(e.WorkerNodes)
 
 	var envVariables []string
-	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
-		envVariables = []string{expectedWorkers,
-			"CLUSTER_ID=" + e.ClusterID,
-			"CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL,
-			"META_DATA=" + e.MetaData}
-	} else {
-		envVariables = []string{expectedWorkers,
-			"CLUSTER_ID=" + e.ClusterID,
-			"META_DATA=" + e.MetaData}
+	callbackURL := daemon.GetAllSparkConfig().CallbackURL
+	if len(callbackURL) == 0 {
+		callbackURL = os.Getenv("CALLBACK_URL")
 	}
+
+	envVariables = []string{expectedWorkers,
+		"CLUSTER_ID=" + e.ClusterID,
+		"META_DATA=" + e.MetaData}
 
 	envVariables = append(envVariables, e.EnvParams...)
 

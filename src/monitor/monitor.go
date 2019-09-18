@@ -15,6 +15,7 @@ const (
 	StatusPending = "PENDING"
 	StatusIdle    = "IDLE"
 	StatusRunning = "RUNNING"
+	StatusDone    = "DONE"
 	statusMap     = "STATUS_MAP"
 	monitorLock   = "MONITOR_LOCK"
 )
@@ -70,6 +71,8 @@ func DeregisterCluster(clusterID string) {
 func getReportedStatus(status cloud.SparkClusterStatus) string {
 	if len(status.ActiveApps) > 0 {
 		return StatusRunning
+	} else if len(status.CompletedApps) > 0 {
+		return StatusDone
 	}
 
 	return StatusIdle

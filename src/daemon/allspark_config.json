@@ -10,5 +10,5 @@
     "CloudEnvironment":
         "docker",
     "CallbackURL":
-        "http://10.11.1.93:32418/docker/checkIn"
+        "http://localhost:32418/checkIn"
 }
