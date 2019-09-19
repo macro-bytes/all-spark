@@ -21,6 +21,10 @@ function wait_for_spark_cluster {
 }
 
 if [ -z $MASTER_IP ]; then
+    export MASTER_URL=spark://$(hostname -I | xargs):7077
+    export EXECUTOR_MEMORY=`cat /proc/meminfo | grep MemTotal | awk '{ print int($2/1024/1024 - 1) }'`G
+    export NUM_EXECUTORS=$EXPECTED_WORKERS
+
     $SPARK_HOME/sbin/start-master.sh
     wait_for_spark_cluster
     /allspark/run_monitor.py &

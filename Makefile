@@ -14,7 +14,7 @@ install_prerequisites: # Todo: Migrate to Go Modules
 	go get -u github.com/Azure/azure-sdk-for-go/... && \
 	go get -u github.com/go-redis/redis
 
-run_tests: allspark_cli allspark_daemon
+run_tests: clean allspark_cli allspark_daemon
 	go test -count=1 -v util/netutil && \
 	go test -count=1 -v cloud && \
 	go test -count=1 -v api && \

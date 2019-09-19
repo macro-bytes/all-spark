@@ -1,0 +1,11 @@
+#!/bin/bash
+
+##
+#  Example run command:
+#
+#  $SPARK_HOME/bin/spark-submit --master $MASTER_URL \
+#       --num-executors $NUM_EXECUTORS \
+#       --executor-memory $EXECUTOR_MEMORY \
+#       /python/to/script
+##
+exit 0

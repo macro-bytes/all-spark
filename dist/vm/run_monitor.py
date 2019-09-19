@@ -1,1 +1,1 @@
-../docker-templates/allspark-spark-worker/run_monitor.py
+../docker-setup/allspark-spark-worker/run_monitor.py

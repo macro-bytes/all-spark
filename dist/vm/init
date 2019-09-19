@@ -20,7 +20,6 @@ done
 
 source /allspark/env.sh
 
-export MASTER=spark://$HOSTNAME:7077
 export SPARK_WORKER_PORT=7078
 export JAVA_HOME="/allspark/zulu8.40.0.25-ca-jdk8.0.222-linux_x64"
 export SPARK_HOME="/allspark/spark-2.4.4-bin-hadoop2.7"
@@ -48,6 +47,10 @@ function wait_for_spark_cluster {
 
 
 if [ -z $MASTER_IP ]; then
+    export MASTER_URL=spark://$(hostname -I | xargs):7077
+    export EXECUTOR_MEMORY=`cat /proc/meminfo | grep MemTotal | awk '{ print int($2/1024/1024 - 1) }'`G
+    export NUM_EXECUTORS=$EXPECTED_WORKERS
+
     $SPARK_HOME/sbin/start-master.sh
     wait_for_spark_cluster
     /allspark/run_monitor.py &
