@@ -25,7 +25,7 @@ type AwsEnvironment struct {
 	Region           string
 	IAMRole          string
 	KeyName          string
-	MetaData         string
+	EnvParams        []string
 }
 
 func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
@@ -121,8 +121,11 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
 	userData := "export EXPECTED_WORKERS=" + workers +
-		"\nexport CLUSTER_ID=" + e.ClusterID +
-		"\nexport META_DATA=" + e.MetaData
+		"\nexport CLUSTER_ID=" + e.ClusterID
+
+	for _, el := range e.EnvParams {
+		userData += "\nexport " + el
+	}
 
 	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
 		userData += "\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL

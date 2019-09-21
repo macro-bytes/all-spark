@@ -26,7 +26,6 @@ type DockerEnvironment struct {
 	ClusterID   string
 	WorkerNodes int
 	Image       string
-	MetaData    string
 	Mounts      []mount.Mount
 	EnvParams   []string
 }
@@ -52,8 +51,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	}
 
 	envVariables = []string{expectedWorkers,
-		"CLUSTER_ID=" + e.ClusterID,
-		"META_DATA=" + e.MetaData}
+		"CLUSTER_ID=" + e.ClusterID}
 
 	envVariables = append(envVariables, e.EnvParams...)
 
