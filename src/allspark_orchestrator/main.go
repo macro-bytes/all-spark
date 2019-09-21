@@ -20,7 +20,8 @@ func main() {
 	go monitor.Run(-1,
 		daemon.GetAllSparkConfig().ClusterMaxRuntime,
 		daemon.GetAllSparkConfig().ClusterIdleTimeout,
-		daemon.GetAllSparkConfig().ClusterPendingTimeout)
+		daemon.GetAllSparkConfig().ClusterPendingTimeout,
+		daemon.GetAllSparkConfig().DoneReportTime)
 
 	api.Init()
 }

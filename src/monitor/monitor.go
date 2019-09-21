@@ -16,6 +16,8 @@ const (
 	StatusIdle          = "IDLE"
 	StatusRunning       = "RUNNING"
 	StatusDone          = "DONE"
+	StatusError         = "ERROR"
+	StatusFinished      = "FINISHED"
 	statusMap           = "STATUS_MAP"
 	monitorLock         = "MONITOR_LOCK"
 )
@@ -72,6 +74,9 @@ func getReportedStatus(status cloud.SparkClusterStatus) string {
 	if len(status.ActiveApps) > 0 {
 		return StatusRunning
 	} else if len(status.CompletedApps) > 0 {
+		if status.CompletedApps[0].State != StatusFinished {
+			return StatusError
+		}
 		return StatusDone
 	}
 
@@ -116,14 +121,15 @@ func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
 // Run - daemon used for monitoring all spark clusters;
 // monitor will run for the specified number of iterations, or indefinitely
 // if iterations <= 0.
-func Run(iterations int, maxRuntime int64,
-	idleTimeout int64, pendingTimeout int64) {
+func Run(iterations int, maxRuntime int64, idleTimeout int64,
+	pendingTimeout int64, doneReportTime int64) {
 
 	if iterations <= 0 {
 		for {
 			if acquireLock() {
 				logger.GetInfo().Println("acquired lock")
-				monitorClusterHelper(maxRuntime, idleTimeout, pendingTimeout)
+				monitorClusterHelper(maxRuntime, idleTimeout,
+					pendingTimeout, doneReportTime)
 				releaseLock()
 			}
 			time.Sleep(10 * time.Second)
@@ -131,14 +137,17 @@ func Run(iterations int, maxRuntime int64,
 	}
 	for i := 0; i < iterations; i++ {
 		if acquireLock() {
-			monitorClusterHelper(maxRuntime, idleTimeout, pendingTimeout)
+			monitorClusterHelper(maxRuntime, idleTimeout,
+				pendingTimeout, doneReportTime)
 			releaseLock()
 		}
 		time.Sleep(10 * time.Second)
 	}
 }
 
-func monitorClusterHelper(maxRuntime int64, idleTimeout int64, pendingTimeout int64) {
+func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
+	pendingTimeout int64, doneReportTime int64) {
+
 	redisClient := datastore.GetRedisClient()
 	defer redisClient.Close()
 
@@ -172,8 +181,10 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64, pendingTimeout in
 			}
 			break
 		case StatusDone:
-			client.DestroyCluster()
-			DeregisterCluster(clusterID)
+			if currentTime-status.Timestamp > doneReportTime {
+				client.DestroyCluster()
+				DeregisterCluster(clusterID)
+			}
 			break
 		}
 	}
