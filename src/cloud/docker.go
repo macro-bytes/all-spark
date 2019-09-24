@@ -2,33 +2,34 @@ package cloud
 
 import (
 	"context"
-	"daemon"
 	"logger"
-	"os"
 	"strconv"
 	"time"
 	"util/netutil"
 
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/client"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/client"
 )
 
 // DockerEnvironment interface
 type DockerEnvironment struct {
 	NanoCpus    int64
 	MemBytes    int64
-	Network     string
 	ClusterID   string
 	WorkerNodes int
 	Image       string
 	Mounts      []mount.Mount
 	EnvParams   []string
 }
+
+const (
+	allsparkBridgedNetwork = "allspark_bridged_newtork"
+)
 
 func (e *DockerEnvironment) getDockerClient() *client.Client {
 	ctx := context.Background()
@@ -45,11 +46,6 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(e.WorkerNodes)
 
 	var envVariables []string
-	callbackURL := daemon.GetAllSparkConfig().CallbackURL
-	if len(callbackURL) == 0 {
-		callbackURL = os.Getenv("CALLBACK_URL")
-	}
-
 	envVariables = []string{expectedWorkers,
 		"CLUSTER_ID=" + e.ClusterID}
 
@@ -60,7 +56,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 		logger.GetError().Println(err)
 	}
 
-	masterIP, err := e.getIPAddress(containerID, e.Network)
+	masterIP, err := e.getIPAddress(containerID)
 	if err != nil {
 		logger.GetError().Println(err)
 	}
@@ -120,7 +116,7 @@ func (e *DockerEnvironment) getClusterNodes() ([]string, error) {
 	return result, nil
 }
 
-func (e *DockerEnvironment) getIPAddress(id string, network string) (string, error) {
+func (e *DockerEnvironment) getIPAddress(id string) (string, error) {
 	cli := e.getDockerClient()
 	defer cli.Close()
 
@@ -129,7 +125,7 @@ func (e *DockerEnvironment) getIPAddress(id string, network string) (string, err
 		return "", nil
 	}
 
-	return resp.NetworkSettings.Networks[network].IPAddress, nil
+	return resp.NetworkSettings.Networks[allsparkBridgedNetwork].IPAddress, nil
 }
 
 func (e *DockerEnvironment) createSparkNode(identifier string,
@@ -148,8 +144,8 @@ func (e *DockerEnvironment) createSparkNode(identifier string,
 				NanoCPUs: e.NanoCpus,
 				Memory:   e.MemBytes,
 			},
-			NetworkMode: "all-spark-bridge",
 			Mounts:      e.Mounts,
+			NetworkMode: allsparkBridgedNetwork,
 		},
 		&network.NetworkingConfig{},
 		identifier)

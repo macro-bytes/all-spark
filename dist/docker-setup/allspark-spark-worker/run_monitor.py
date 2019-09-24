@@ -26,6 +26,6 @@ def run_monitor(cluster_id, callback_url):
 if __name__ == "__main__":
     try:
         run_monitor(os.environ["CLUSTER_ID"],
-                    os.environ["CALLBACK_URL"])
+                    os.environ["ALLSPARK_CALLBACK"])
     except:
         ...

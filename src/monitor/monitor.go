@@ -181,8 +181,8 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 			}
 			break
 		case StatusDone:
+			client.DestroyCluster()
 			if currentTime-status.Timestamp > doneReportTime {
-				client.DestroyCluster()
 				DeregisterCluster(clusterID)
 			}
 			break

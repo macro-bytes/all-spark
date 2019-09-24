@@ -3,6 +3,8 @@
         "localhost:6379",
     "ClusterPendingTimeout":
         600,
+    "DoneReportTime":
+        600,
     "ClusterIdleTimeout":
         600,
     "ClusterMaxRuntime":

@@ -128,7 +128,7 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 	}
 
 	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
-		userData += "\nexport CALLBACK_URL=" + daemon.GetAllSparkConfig().CallbackURL
+		userData += "\nexport ALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL
 	}
 
 	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)
