@@ -53,6 +53,8 @@ func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 // RegisterCluster - registers newly created spark
 // cluster with a pending status
 func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient []byte) {
+	logger.GetInfo().Printf("registering cluster: %s, %s, %s",
+		clusterID, cloudEnvironment, serializedClient)
 	setStatus(clusterID, SparkClusterStatusAtEpoch{
 		Status:           StatusPending,
 		Timestamp:        getTimestamp(),
@@ -64,6 +66,7 @@ func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient
 // DeregisterCluster - registers newly created spark
 // cluster with a pending status
 func DeregisterCluster(clusterID string) {
+	logger.GetInfo().Printf("deregistering cluster %s", clusterID)
 	client := datastore.GetRedisClient()
 	defer client.Close()
 
@@ -107,6 +110,7 @@ func GetLastKnownStatus(clusterID string) string {
 }
 
 func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
+	logger.GetInfo().Printf("setting status %s, status: %+v", clusterID, status.Status)
 	client := datastore.GetRedisClient()
 	defer client.Close()
 
@@ -163,28 +167,40 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 		currentTime := getTimestamp()
 		switch status.Status {
 		case StatusPending:
+			logger.GetInfo().Printf("monitor reported %s for cluster %s",
+				StatusPending, clusterID)
 			if currentTime-status.Timestamp > pendingTimeout {
 				client.DestroyCluster()
 				DeregisterCluster(clusterID)
 			}
 			break
 		case StatusIdle:
+			logger.GetInfo().Printf("monitor reported %s for cluster %s",
+				StatusIdle, clusterID)
 			if currentTime-status.Timestamp > idleTimeout {
 				client.DestroyCluster()
 				DeregisterCluster(clusterID)
 			}
 			break
 		case StatusRunning:
+			logger.GetInfo().Printf("monitor reported %s for cluster %s",
+				StatusRunning, clusterID)
 			if currentTime-status.Timestamp > maxRuntime {
 				client.DestroyCluster()
 				DeregisterCluster(clusterID)
 			}
 			break
 		case StatusDone:
+			logger.GetInfo().Printf("monitor reported %s for cluster %s",
+				StatusDone, clusterID)
 			client.DestroyCluster()
 			if currentTime-status.Timestamp > doneReportTime {
 				DeregisterCluster(clusterID)
 			}
+			break
+		default:
+			logger.GetInfo().Printf("monitor reported no status for cluster %s",
+				clusterID)
 			break
 		}
 	}

@@ -22,6 +22,7 @@ var config AllSparkConfig
 // Init - loads allspark configuration parameters into configParams
 func Init(path string) {
 	err := serializer.DeserializePath(path, &config)
+	logger.GetInfo().Printf("config parameters: %+v", config)
 	if err != nil {
 		logger.GetFatal().Fatalln(err)
 	}

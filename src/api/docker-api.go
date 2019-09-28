@@ -2,8 +2,8 @@ package api
 
 import (
 	"cloud"
-	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"logger"
 	"monitor"
 	"net/http"
@@ -28,13 +28,17 @@ func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
 		return nil, err
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	var template cloud.DockerEnvironment
-
-	err = decoder.Decode(&template)
+	buffer, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
+
+	var template cloud.DockerEnvironment
+	err = serializer.Deserialize(buffer, &template)
+	if err != nil {
+		return nil, err
+	}
+	logger.GetInfo().Printf("Form body: %s", buffer)
 
 	err = validateDockerTemplate(template)
 	if err != nil {
@@ -45,6 +49,7 @@ func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
 }
 
 func createClusterDocker(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("createClusterDocker")
 	client, err := validateDockerFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -71,6 +76,7 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 }
 
 func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("destroyClusterDocker")
 	client, err := validateDockerFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

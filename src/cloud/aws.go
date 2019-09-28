@@ -34,7 +34,7 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	)
 
 	if err != nil {
-		logger.GetFatal().Fatalln(err)
+		logger.GetError().Println(err)
 	}
 
 	return ec2.New(sess)

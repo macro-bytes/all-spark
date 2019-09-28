@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"context"
+	"errors"
 	"logger"
 	"strconv"
 	"time"
@@ -41,13 +42,18 @@ func (e *DockerEnvironment) getDockerClient() *client.Client {
 	return cli
 }
 
+func (e *DockerEnvironment) computeExecutorMemory() string {
+	return strconv.FormatInt(e.MemBytes/1024/1024/1024-1, 10)
+}
+
 // CreateCluster - creates a spark cluster in docker
 func (e *DockerEnvironment) CreateCluster() (string, error) {
 	expectedWorkers := "EXPECTED_WORKERS=" + strconv.Itoa(e.WorkerNodes)
 
 	var envVariables []string
 	envVariables = []string{expectedWorkers,
-		"CLUSTER_ID=" + e.ClusterID}
+		"CLUSTER_ID=" + e.ClusterID,
+		"EXECUTOR_MEMORY=" + e.computeExecutorMemory()}
 
 	envVariables = append(envVariables, e.EnvParams...)
 
@@ -68,7 +74,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 			e.createSparkNode(identifier, env)
 		}
 	} else {
-		logger.GetFatal().Fatalln("master node has failed to come online")
+		return "", errors.New("master node has failed to come online")
 	}
 
 	webURL := "http://" + masterIP + ":8080"

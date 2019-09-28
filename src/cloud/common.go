@@ -141,9 +141,7 @@ func Create(environment string, clusterConfiguration []byte) (CloudEnvironment, 
 		var result DockerEnvironment
 		err := json.Unmarshal(clusterConfiguration, &result)
 		return &result, err
-	default:
-		logger.GetFatal().Fatalln("invalid cloud-environment " + environment)
 	}
 
-	return nil, nil
+	return nil, errors.New("invalid cloud-environment " + environment)
 }

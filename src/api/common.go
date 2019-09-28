@@ -3,11 +3,12 @@ package api
 import (
 	"cloud"
 	"daemon"
-	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"logger"
 	"monitor"
 	"net/http"
+	"util/serializer"
 )
 
 func validateRequest(r *http.Request, method string) error {
@@ -23,6 +24,7 @@ func validateRequest(r *http.Request, method string) error {
 }
 
 func getStatus(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("getStatus")
 	err := validateRequest(r, "GET")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -36,6 +38,7 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("clusterID not specified"))
 		return
 	}
+	logger.GetInfo().Printf("checking status on clusterID %v", clusterID)
 
 	status := monitor.GetLastKnownStatus(clusterID)
 	w.WriteHeader(http.StatusOK)
@@ -43,6 +46,7 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func checkIn(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("checkin")
 	err := validateRequest(r, "POST")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -51,13 +55,14 @@ func checkIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body cloud.SparkStatusCheckIn
-	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(&body)
+	buffer, err := ioutil.ReadAll(r.Body)
+	serializer.Deserialize(buffer, &body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
+	logger.GetInfo().Printf("Form body: %s", buffer)
 
 	monitor.HandleCheckIn(body.ClusterID, body.Status)
 }

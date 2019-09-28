@@ -2,8 +2,8 @@ package api
 
 import (
 	"cloud"
-	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"logger"
 	"monitor"
 	"net/http"
@@ -32,10 +32,15 @@ func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 		return nil, err
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	var template cloud.AwsEnvironment
+	buffer, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
 
-	err = decoder.Decode(&template)
+	logger.GetInfo().Printf("Form body: %s", buffer)
+
+	var template cloud.AwsEnvironment
+	err = serializer.Deserialize(buffer, &template)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +54,10 @@ func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 }
 
 func createClusterAws(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("createClusterAws")
 	client, err := validateAwsFormBody(r)
 	if err != nil {
+		logger.GetError().Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -58,6 +65,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 
 	_, err = client.CreateCluster()
 	if err != nil {
+		logger.GetError().Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -75,6 +83,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 }
 
 func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("destroyClusterAws")
 	client, err := validateAwsFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
