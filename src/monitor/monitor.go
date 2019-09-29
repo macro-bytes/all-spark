@@ -31,6 +31,17 @@ type SparkClusterStatusAtEpoch struct {
 	CloudEnvironment string
 }
 
+// GetClientData - Returns the serialized and cloud environment
+func GetClientData(clusterID string) ([]byte, string, error) {
+	state, err := getLastEpoch(clusterID)
+	if err != nil {
+		logger.GetError().Printf("Unable to retrieve state for cluster %v", clusterID)
+		return nil, "", err
+	}
+
+	return state.Client, state.CloudEnvironment, nil
+}
+
 // HandleCheckIn - handles spark monitor check-in http requests
 func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 	logger.GetInfo().Printf("cluster: %v, status: %+v", clusterID, clusterStatus)

@@ -45,6 +45,49 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(status))
 }
 
+func destroyCluster(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("destroyCluster")
+	err := validateRequest(r, "POST")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	clusterID := r.PostFormValue("clusterID")
+	if len(clusterID) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("clusterID not specified"))
+		return
+	}
+
+	clientBuffer, environment, err := monitor.GetClientData(clusterID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Unable to retrieve status for clusterID " + clusterID))
+		return
+	}
+
+	client, err := cloud.Create(environment, clientBuffer)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Unable to establish allspark client with clusterID " + clusterID))
+		return
+	}
+
+	err = client.DestroyCluster()
+	if err != nil {
+		logger.GetInfo().Printf(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("There was an error destroying clusterID " + clusterID))
+		return
+	}
+
+	monitor.DeregisterCluster(clusterID)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("successfully destroyed cluster"))
+}
+
 func checkIn(w http.ResponseWriter, r *http.Request) {
 	logger.GetInfo().Println("checkin")
 	err := validateRequest(r, "POST")
@@ -80,5 +123,6 @@ func Init() {
 
 	http.HandleFunc("/checkIn", checkIn)
 	http.HandleFunc("/getStatus", getStatus)
+	http.HandleFunc("/destroyCluster", destroyCluster)
 	http.ListenAndServe(":32418", nil)
 }

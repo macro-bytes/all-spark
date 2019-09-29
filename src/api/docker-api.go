@@ -75,30 +75,7 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("successfully launched cluster"))
 }
 
-func destroyClusterDocker(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("destroyClusterDocker")
-	client, err := validateDockerFormBody(r)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	err = client.DestroyCluster()
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	monitor.DeregisterCluster(client.ClusterID)
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("successfully destroyed cluster"))
-}
-
 // InitDockerAPI - Initialize the Docker REST API
 func InitDockerAPI() {
 	http.HandleFunc("/docker/createCluster", createClusterDocker)
-	http.HandleFunc("/docker/destroyCluster", destroyClusterDocker)
 }

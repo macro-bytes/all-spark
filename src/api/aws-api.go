@@ -82,29 +82,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("successfully launched cluster"))
 }
 
-func destroyClusterAws(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("destroyClusterAws")
-	client, err := validateAwsFormBody(r)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	err = client.DestroyCluster()
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	monitor.DeregisterCluster(client.ClusterID)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("successfully destroyed cluster"))
-}
-
 // InitAwsAPI - Initialize the AWS REST API
 func InitAwsAPI() {
 	http.HandleFunc("/aws/createCluster", createClusterAws)
-	http.HandleFunc("/aws/destroyCluster", destroyClusterAws)
 }
