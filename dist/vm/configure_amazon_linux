@@ -1,0 +1,51 @@
+#!/bin/bash -ex
+
+function clean_up {
+    rm /home/ec2-user/.ssh/authorized_keys
+    rm -Rf /var/lib/cloud/*
+    rm -Rf /allspark/allspark-orchestrator
+}
+
+function enable_services {
+    systemctl start docker
+    systemctl enable docker
+
+    systemctl start nfs-server
+    systemctl enable nfs-server
+
+    systemctl enable allspark
+}
+
+function configure_allspark {
+    mkdir /shared
+    chmod 777 /shared
+
+    mkdir /allspark
+    cd /allspark 
+    git clone https://github.com/macrobytes/allspark-orchestrator.git
+    DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
+    
+    cp $DATA_PATH/allspark.service /usr/lib/systemd/system
+    cp $DATA_PATH/exports /etc/exports
+    cp $DATA_PATH/init /allspark
+    cp $DATA_PATH/patch_allspark /allspark
+
+    chmod +x /allspark/init
+    chmod +x /allspark/patch_allspark
+}
+
+function install_packages {
+    yum install -y docker \
+        nfs-utils \
+        awslogs \
+        git
+}
+
+yum -y update
+install_packages
+configure_allspark
+enable_services
+clean_up
+
+docker pull macrobytes/allspark-spark-worker:latest
+docker tag macrobytes/allspark-spark-worker:latest allspark-worker:latest
