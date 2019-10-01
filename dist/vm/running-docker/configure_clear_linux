@@ -92,4 +92,4 @@ enable_services
 clean_up
 
 docker pull macrobytes/allspark-spark-worker:latest
-docker tag macrobytes/allspark-spark-worker:latest allspark-worker:
+docker tag macrobytes/allspark-spark-worker:latest allspark-worker:latest
