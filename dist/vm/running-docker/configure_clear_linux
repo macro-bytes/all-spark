@@ -31,7 +31,7 @@ function configure_allspark {
     cp $DATA_PATH/allspark.service /usr/lib/systemd/system
     cp $DATA_PATH/exports /etc/exports
     cp $DATA_PATH/init /allspark
-    cp $DATA_PATH/patch_allspark /patch_allspark
+    cp $DATA_PATH/patch_allspark /allspark
 
     chmod +x /allspark/init
     chmod +x /allspark/patch_allspark
