@@ -3,6 +3,7 @@
 function clean_up {
     rm /home/clear/.ssh/authorized_keys
     rm /var/lib/cloud/*
+    rm -Rf /allspark/allspark-orchestrator
 }
 
 function enable_services {
@@ -30,8 +31,10 @@ function configure_allspark {
     cp $DATA_PATH/allspark.service /usr/lib/systemd/system
     cp $DATA_PATH/exports /etc/exports
     cp $DATA_PATH/init /allspark
+    cp $DATA_PATH/patch_allspark /patch_allspark
 
     chmod +x /allspark/init
+    chmod +x /allspark/patch_allspark
 }
 
 function install_bundles {

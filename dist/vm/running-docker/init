@@ -20,13 +20,6 @@ done
 
 source /allspark/env.sh
 
-if [ ! -z $PATCH_IMAGE ]; then
-        swupd update
-        docker pull $PATCH_IMAGE
-        docker tag $PATCH_IMAGE allspark-worker:latest
-        exit 0
-fi
-
 if [ ! -z $MASTER_IP ]; then
         mount $MASTER_IP:/shared /shared
 fi
