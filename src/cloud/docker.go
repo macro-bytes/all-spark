@@ -52,6 +52,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 
 	var envVariables []string
 	envVariables = []string{expectedWorkers,
+		"SPARK_WORKER_PORT=7078",
 		"CLUSTER_ID=" + e.ClusterID,
 		"EXECUTOR_MEMORY=" + e.computeExecutorMemory()}
 
@@ -68,7 +69,7 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
-		env := []string{"MASTER_IP=" + masterIP}
+		env := []string{"MASTER_IP=" + masterIP, "SPARK_WORKER_PORT=7078"}
 		for i := 1; i <= e.WorkerNodes; i++ {
 			identifier := e.ClusterID + workerIdentifier + strconv.Itoa(i)
 			e.createSparkNode(identifier, env)

@@ -1,31 +1,21 @@
 #!/bin/bash -ex
 
 function clean_up {
-    rm -Rf /allspark/allspark-orchestrator
-    rm /allspark/spark-2.4.4-bin-hadoop2.7.tgz
-    rm /allspark/sparkling-water-2.4.13.zip
-    rm /allspark/zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz
     rm /home/clear/.ssh/authorized_keys
     rm /var/lib/cloud/*
 }
 
 function enable_services {
-    systemctl start rpcbind
-    systemctl start nfs-server
-    systemctl enable allspark
+    systemctl start docker
+    systemctl enable docker
+
     systemctl enable rpcbind
+    systemctl start rpcbind
+
+    systemctl start nfs-server
     systemctl enable nfs-server
-}
 
-function install_ml_tools {
-    wget https://www.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
-    tar -xf spark-2.4.4-bin-hadoop2.7.tgz
-
-    wget https://s3.amazonaws.com/h2o-release/sparkling-water/rel-2.4/13/sparkling-water-2.4.13.zip
-    unzip sparkling-water-2.4.13.zip
-
-    wget https://cdn.azul.com/zulu/bin/zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz
-    tar -xvf zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz
+    systemctl enable allspark
 }
 
 function configure_allspark {
@@ -35,16 +25,12 @@ function configure_allspark {
     mkdir /allspark
     cd /allspark 
     git clone https://github.com/macrobytes/allspark-orchestrator.git
-    DATA_PATH="/allspark/allspark-orchestrator/dist/vm/bare-metal"
+    DATA_PATH="/allspark/allspark-orchestrator/dist/vm/running-docker"
     
     cp $DATA_PATH/allspark.service /usr/lib/systemd/system
     cp $DATA_PATH/exports /etc/exports
     cp $DATA_PATH/init /allspark
-    cp $DATA_PATH/run /allspark
-    cp $DATA_PATH/run_monitor.py /allspark
 
-    chmod +x /allspark/run_monitor.py
-    chmod +x /allspark/run
     chmod +x /allspark/init
 }
 
@@ -58,7 +44,8 @@ function install_python_packages {
 }
 
 function install_bundles {
-    swupd bundle-add bootloader \
+    swupd bundle-add cloud-control \
+        bootloader \
         cloud-api \
         cloud-control \
         clr-network-troubleshooter \
@@ -108,8 +95,8 @@ function install_bundles {
 }
 
 install_bundles
+swupd update
 install_python_packages
 configure_allspark
-install_ml_tools
 enable_services
 clean_up

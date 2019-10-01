@@ -1,0 +1,22 @@
+#!/bin/bash -x
+
+while true; do
+        /usr/bin/curl -s http://169.254.169.254/latest/meta-data/hostname -o /etc/hostname
+        if [ "$?" == "0" ]; then
+                break
+        fi
+        sleep 1
+done
+/usr/bin/hostname -F /etc/hostname
+export HOSTNAME=`/usr/bin/hostname`
+
+while true; do
+        /usr/bin/curl -s http://169.254.169.254/latest/user-data -o /allspark/env.sh
+        if [ "$?" == "0" ]; then
+                break
+        fi
+        sleep 1
+done
+
+docker run -d --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared macrobytes/allspark-spark-worker:latest
+tail -f /dev/null

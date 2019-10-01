@@ -1,0 +1,8 @@
+[Unit]
+Description=allspark
+
+[Service]
+ExecStart=/allspark/init
+
+[Install]
+WantedBy=multi-user.target

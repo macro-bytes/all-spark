@@ -120,15 +120,16 @@ func (e *AwsEnvironment) getPublicIP(instanceID string) (string, error) {
 func (e *AwsEnvironment) launchMaster() (string, string, error) {
 
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
-	userData := "export EXPECTED_WORKERS=" + workers +
-		"\nexport CLUSTER_ID=" + e.ClusterID
+	userData := "EXPECTED_WORKERS=" + workers +
+		"\nSPARK_WORKER_PORT=7078" +
+		"\nCLUSTER_ID=" + e.ClusterID
 
 	for _, el := range e.EnvParams {
-		userData += "\nexport " + el
+		userData += "\n" + el
 	}
 
 	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
-		userData += "\nexport ALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL
+		userData += "\nALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL
 	}
 
 	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)
@@ -143,7 +144,8 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 
 func (e *AwsEnvironment) launchWorkers(masterIP string) (*ec2.Reservation, error) {
 
-	userData := "export MASTER_IP=" + masterIP
+	userData := "MASTER_IP=" + masterIP +
+		"\nSPARK_WORKER_PORT=7078"
 
 	return e.launchInstances(e.ClusterID+workerIdentifier,
 		e.WorkerNodes, userData)
