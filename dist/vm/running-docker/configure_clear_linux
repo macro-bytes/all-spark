@@ -34,15 +34,6 @@ function configure_allspark {
     chmod +x /allspark/init
 }
 
-function install_python_packages {
-    pip install tensorflow \
-        tensorflowonspark \
-        h2o \
-        h2o-pysparkling-2.4 \
-        pyspark \
-        mlflow
-}
-
 function install_bundles {
     swupd bundle-add cloud-control \
         bootloader \
@@ -96,7 +87,8 @@ function install_bundles {
 
 install_bundles
 swupd update
-install_python_packages
 configure_allspark
 enable_services
 clean_up
+
+docker pull macrobytes/allspark-spark-worker:latest

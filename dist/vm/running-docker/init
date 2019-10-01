@@ -18,5 +18,10 @@ while true; do
         sleep 1
 done
 
-docker run -d --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared macrobytes/allspark-spark-worker:latest
+source /allspark/env.sh
+
+if [ ! -z $MASTER_IP ]; then
+        mount $MASTER_IP:/shared /shared
+fi
+docker run -d --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared macrobytes/allspark-spark-worker:latest
 tail -f /dev/null
