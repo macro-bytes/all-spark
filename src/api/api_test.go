@@ -95,6 +95,13 @@ func testHTTPRequest(t *testing.T,
 	}
 }
 
+func TestHealthCheck(t *testing.T) {
+	testHTTPRequest(t, healthCheck, "POST", "/healthCheck",
+		nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, healthCheck, "GET", "/healthCheck",
+		nil, http.StatusOK, false)
+}
+
 func TestCheckin(t *testing.T) {
 	testHTTPRequest(t, checkIn, "GET", "/checkIn",
 		nil, http.StatusBadRequest, false)

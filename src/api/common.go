@@ -110,6 +110,19 @@ func checkIn(w http.ResponseWriter, r *http.Request) {
 	monitor.HandleCheckIn(body.ClusterID, body.Status)
 }
 
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("checkin")
+	err := validateRequest(r, "GET")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
 // Init - initializes the allspark-orchestrator web api
 func Init() {
 	switch daemon.GetAllSparkConfig().CloudEnvironment {
@@ -123,6 +136,7 @@ func Init() {
 
 	http.HandleFunc("/checkIn", checkIn)
 	http.HandleFunc("/getStatus", getStatus)
+	http.HandleFunc("/healthCheck", healthCheck)
 	http.HandleFunc("/destroyCluster", destroyCluster)
 	http.ListenAndServe(":32418", nil)
 }
