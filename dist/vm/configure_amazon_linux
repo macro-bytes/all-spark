@@ -13,6 +13,8 @@ function enable_services {
     systemctl start nfs-server
     systemctl enable nfs-server
 
+    systemctl start awslogsd
+    systemctl enable awslogsd
     systemctl enable allspark
 }
 

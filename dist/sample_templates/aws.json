@@ -2,7 +2,7 @@
     "ClusterID":
         "aws-spark-cluster",
     "ImageID":
-        "ami-0ff290e45a63c4fba",
+        "ami-0641dde7d1f22aafb",
     "InstanceType":
         "m5.2xlarge",
     "EBSVolumeSize":
@@ -17,7 +17,7 @@
     "Region":
         "us-west-2",
     "IAMRole":
-        "AmazonS3FullAccess",
+        "AllSpark-CloudWatchLogging",
     "KeyName":
         "wp-1",
     "EnvParams": [

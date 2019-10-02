@@ -23,5 +23,5 @@ source /allspark/env.sh
 if [ ! -z $MASTER_IP ]; then
         mount $MASTER_IP:/shared /shared
 fi
-docker run -d --log-driver journal --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+docker run -d --log-driver journald --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
 tail -f /dev/null
