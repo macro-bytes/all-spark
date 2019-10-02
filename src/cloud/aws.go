@@ -87,9 +87,13 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 			},
 		})
 
+		logger.GetInfo().Printf("launched ec2 instance %s, with identifier %s",
+			*el.InstanceId, identifier)
+
 		if err != nil {
 			return resp, err
 		}
+
 	}
 
 	return resp, nil
