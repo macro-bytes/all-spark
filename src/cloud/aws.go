@@ -47,7 +47,7 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 
 	encodedUserData := b64.StdEncoding.EncodeToString([]byte(userData))
 
-	resp, err := cli.RunInstances(&ec2.RunInstancesInput{
+	input := &ec2.RunInstancesInput{
 		ImageId:          aws.String(e.ImageID),
 		InstanceType:     aws.String(e.InstanceType),
 		MinCount:         aws.Int64(instanceCount),
@@ -55,7 +55,6 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 		SecurityGroupIds: aws.StringSlice(e.SecurityGroupIds),
 		SubnetId:         aws.String(e.SubnetID),
 		UserData:         aws.String(encodedUserData),
-		KeyName:          aws.String(e.KeyName),
 		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
 			Name: aws.String(e.IAMRole),
 		},
@@ -70,7 +69,13 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 				},
 			},
 		},
-	})
+	}
+
+	if len(e.KeyName) > 0 {
+		input.KeyName = aws.String(e.KeyName)
+	}
+
+	resp, err := cli.RunInstances(input)
 
 	if err != nil {
 		return nil, err

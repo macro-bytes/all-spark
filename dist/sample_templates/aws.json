@@ -19,7 +19,7 @@
     "IAMRole":
         "AllSpark-CloudWatchLogging",
     "KeyName":
-        "wp-1",
+        "wp-2",
     "EnvParams": [
         "PARAM=VALUE"
     ]
