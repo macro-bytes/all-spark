@@ -21,7 +21,7 @@ function wait_for_spark_cluster {
 }
 
 if [ -z $MASTER_IP ]; then
-    export MASTER_URL=spark://$(hostname -I | xargs):7077
+    export MASTER_URL=spark://$(hostname -I | awk '{ print $1 }'):7077
     export NUM_EXECUTORS=$EXPECTED_WORKERS
 
     $SPARK_HOME/sbin/start-master.sh

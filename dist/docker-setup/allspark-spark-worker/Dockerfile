@@ -12,6 +12,7 @@ ADD requirements.txt requirements.txt
 ADD run_monitor.py run_monitor.py
 
 RUN swupd bundle-add curl \
+        cloud-api \
         git \
         jq \
         python3-basic \
