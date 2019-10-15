@@ -83,12 +83,14 @@ func destroyCluster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = client.DestroyCluster()
-	if err != nil {
-		logger.GetInfo().Printf(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("There was an error destroying clusterID " + clusterID))
-		return
+	if status != monitor.StatusDone {
+		err = client.DestroyCluster()
+		if err != nil {
+			logger.GetInfo().Printf(err.Error())
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("There was an error destroying clusterID " + clusterID))
+			return
+		}
 	}
 
 	monitor.DeregisterCluster(clusterID)
