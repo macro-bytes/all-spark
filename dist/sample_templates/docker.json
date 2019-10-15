@@ -8,7 +8,7 @@
     "WorkerNodes":
          3,
     "Image":
-        "macrobytes/allspark-spark-worker:latest",
+        "macrobytes/allspark-compute:latest",
     "Mounts": [
         {
             "Type": "bind",

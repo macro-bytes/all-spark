@@ -1,0 +1,63 @@
+#!/bin/bash
+
+function wait_for_spark_master {
+    while true; do
+        MASTER_ALIVE=`nc -z $MASTER_IP 7077`
+        if [ "$?" == "0" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function write_h2o_flat_file {
+    echo $(hostname -I | awk '{ print $1":54321" }') >/shared/buff.txt
+    curl -s http://localhost:8080/json/ | grep -i host | cut -d'"' -f4 | awk '{ print $1":54321" }' >>/shared/buff.txt
+    mv /shared/buff.txt /shared/flatfile.txt
+}
+
+function wait_for_h2o_flat_file {
+    while true; do
+        if [ -e /shared/flatfile.txt ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function launch_h2o {
+    HEAP_SIZE=`cat /proc/meminfo | grep MemTotal | awk '{ print int($2/2/1024/1024+1) }'`g
+    $JAVA_HOME/bin/java -Xmx$HEAP_SIZE -jar h2odriver-sw3.26.6-2-extended.jar -flatfile /shared/flatfile.txt -name allspark &
+}
+
+function wait_for_spark_cluster {
+    while true; do
+        ALIVE_WORKERS=`curl -s http://localhost:8080/json/ | jq .aliveworkers`
+        if [ "$ALIVE_WORKERS" == "$EXPECTED_WORKERS" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+if [ -z $MASTER_IP ]; then
+    export MASTER_URL=spark://$(hostname -I | awk '{ print $1 }'):7077
+    export NUM_EXECUTORS=$EXPECTED_WORKERS
+
+    $SPARK_HOME/sbin/start-master.sh
+
+    wait_for_spark_cluster
+    write_h2o_flat_file
+    launch_h2o
+
+    /allspark/run_monitor.py &
+    /allspark/run
+else
+    wait_for_spark_master
+    $SPARK_HOME/sbin/start-slave.sh "spark://$MASTER_IP:7077"
+
+    wait_for_h2o_flat_file
+    launch_h2o
+fi
+
+tail -f /dev/null

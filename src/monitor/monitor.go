@@ -51,9 +51,18 @@ func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 		logger.GetError().Println(err)
 	}
 
+	var timestamp int64
+	reportedStatus := getReportedStatus(clusterStatus)
+
+	if reportedStatus != priorClusterState.Status {
+		timestamp = getTimestamp()
+	} else {
+		timestamp = priorClusterState.Timestamp
+	}
+
 	epochStatus := SparkClusterStatusAtEpoch{
-		Timestamp:        getTimestamp(),
-		Status:           getReportedStatus(clusterStatus),
+		Timestamp:        timestamp,
+		Status:           reportedStatus,
 		Client:           priorClusterState.Client,
 		CloudEnvironment: priorClusterState.CloudEnvironment,
 	}
@@ -173,46 +182,54 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 		client, err := cloud.Create(status.CloudEnvironment, status.Client)
 		if err != nil {
 			logger.GetError().Println(err)
-		}
+			logger.GetError().Printf("cluster does not appear to be valid %v: %v",
+				clusterID, redisClient.HGet(statusMap, clusterID).Val())
+			logger.GetError().Printf("deregistering cluster %v", clusterID)
+			DeregisterCluster(clusterID)
+		} else {
 
-		currentTime := getTimestamp()
-		switch status.Status {
-		case StatusPending:
-			logger.GetInfo().Printf("monitor reported %s for cluster %s",
-				StatusPending, clusterID)
-			if currentTime-status.Timestamp > pendingTimeout {
-				client.DestroyCluster()
-				DeregisterCluster(clusterID)
+			currentTime := getTimestamp()
+			switch status.Status {
+			case StatusPending:
+				logger.GetInfo().Printf("monitor reported %s for cluster %s",
+					StatusPending, clusterID)
+				if currentTime-status.Timestamp > pendingTimeout {
+					client.DestroyCluster()
+					DeregisterCluster(clusterID)
+				}
+				break
+			case StatusIdle:
+				logger.GetInfo().Printf("monitor reported %s for cluster %s",
+					StatusIdle, clusterID)
+				if currentTime-status.Timestamp > idleTimeout {
+					client.DestroyCluster()
+					DeregisterCluster(clusterID)
+				}
+				break
+			case StatusRunning:
+				logger.GetInfo().Printf("monitor reported %s for cluster %s",
+					StatusRunning, clusterID)
+				if currentTime-status.Timestamp > maxRuntime {
+					client.DestroyCluster()
+					DeregisterCluster(clusterID)
+				}
+				break
+			case StatusDone:
+				logger.GetInfo().Printf("monitor reported %s for cluster %s, terminating cluster",
+					StatusDone, clusterID)
+				err := client.DestroyCluster()
+				if err != nil {
+					logger.GetError().Println(err)
+				}
+				if currentTime-status.Timestamp > doneReportTime {
+					DeregisterCluster(clusterID)
+				}
+				break
+			default:
+				logger.GetInfo().Printf("monitor reported no status for cluster %s",
+					clusterID)
+				break
 			}
-			break
-		case StatusIdle:
-			logger.GetInfo().Printf("monitor reported %s for cluster %s",
-				StatusIdle, clusterID)
-			if currentTime-status.Timestamp > idleTimeout {
-				client.DestroyCluster()
-				DeregisterCluster(clusterID)
-			}
-			break
-		case StatusRunning:
-			logger.GetInfo().Printf("monitor reported %s for cluster %s",
-				StatusRunning, clusterID)
-			if currentTime-status.Timestamp > maxRuntime {
-				client.DestroyCluster()
-				DeregisterCluster(clusterID)
-			}
-			break
-		case StatusDone:
-			logger.GetInfo().Printf("monitor reported %s for cluster %s",
-				StatusDone, clusterID)
-			client.DestroyCluster()
-			if currentTime-status.Timestamp > doneReportTime {
-				DeregisterCluster(clusterID)
-			}
-			break
-		default:
-			logger.GetInfo().Printf("monitor reported no status for cluster %s",
-				clusterID)
-			break
 		}
 	}
 }
@@ -234,7 +251,8 @@ func acquireLock() bool {
 		return false
 	}
 
-	return redisClient.SetNX(monitorLock, id, 15*time.Minute).Val()
+	redisClient.SetNX(monitorLock, id, 15*time.Minute).Val()
+	return id == redisClient.Get(monitorLock).Val()
 }
 
 func getTimestamp() int64 {

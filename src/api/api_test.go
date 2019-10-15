@@ -13,6 +13,39 @@ import (
 	"util/serializer"
 )
 
+const (
+	awsTemplatePath    = "../../dist/sample_templates/aws.json"
+	dockerTemplatePath = "../../dist/sample_templates/docker.json"
+)
+
+func GetAwsClient(t *testing.T) cloud.CloudEnvironment {
+	templateConfig, err := cloud.ReadTemplateConfiguration(awsTemplatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client, err := cloud.Create(cloud.Aws, templateConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return client
+}
+
+func getDockerClient(t *testing.T) cloud.CloudEnvironment {
+	templateConfig, err := cloud.ReadTemplateConfiguration(dockerTemplatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client, err := cloud.Create(cloud.Docker, templateConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return client
+}
+
 func getBadCreateFormDataAws() []byte {
 	var template = cloud.AwsEnvironment{
 		ClusterID:     "test",
@@ -129,6 +162,9 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 	testHTTPRequest(t, createClusterAws, "POST", "/aws/createCluster",
 		bytes.NewReader(getValidCreateFormDataAws()), http.StatusOK, false)
 
+	testHTTPRequest(t, destroyCluster, "POST", "/destroyCluster",
+		strings.NewReader(getDestroyClusterFormAws()),
+		http.StatusServiceUnavailable, true)
 	testHTTPRequest(t, destroyCluster, "GET", "/destroyCluster",
 		nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, destroyCluster, "POST", "/destroyCluster",
@@ -137,9 +173,7 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 		"/destroyCluster", bytes.NewReader(getBadCreateFormDataAws()),
 		http.StatusBadRequest, false)
 
-	testHTTPRequest(t, destroyCluster, "POST", "/destroyCluster",
-		strings.NewReader(getDestroyClusterFormAws()),
-		http.StatusOK, true)
+	GetAwsClient(t).DestroyCluster()
 }
 
 func TestCreateAndDestroyClusterDocker(t *testing.T) {
@@ -154,6 +188,9 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 		"/docker/createCluster",
 		bytes.NewReader(getValidCreateFormDataDocker()), http.StatusOK, false)
 
+	testHTTPRequest(t, destroyCluster, "POST", "/docker/destroyCluster",
+		strings.NewReader(getDestroyClusterFormDocker()),
+		http.StatusServiceUnavailable, true)
 	testHTTPRequest(t, destroyCluster, "GET",
 		"/destroyCluster", nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, destroyCluster, "POST",
@@ -162,6 +199,5 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 		"/destroyCluster", bytes.NewReader(getBadCreateFormDataDocker()),
 		http.StatusBadRequest, false)
 
-	testHTTPRequest(t, destroyCluster, "POST", "/destroyCluster",
-		strings.NewReader(getDestroyClusterFormDocker()), http.StatusOK, true)
+	getDockerClient(t).DestroyCluster()
 }

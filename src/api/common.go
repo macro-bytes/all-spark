@@ -75,6 +75,14 @@ func destroyCluster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	status := monitor.GetLastKnownStatus(clusterID)
+	if status == monitor.StatusPending {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("unable to destroy cluster " + clusterID +
+			" when status is " + monitor.StatusPending))
+		return
+	}
+
 	err = client.DestroyCluster()
 	if err != nil {
 		logger.GetInfo().Printf(err.Error())

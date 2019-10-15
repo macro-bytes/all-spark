@@ -185,6 +185,7 @@ func (e *AwsEnvironment) CreateCluster() (string, error) {
 func (e *AwsEnvironment) DestroyCluster() error {
 	cli := e.getEc2Client()
 	instances, err := e.getClusterNodes()
+	logger.GetInfo().Printf("destroying cluster %v with instance-ids %v", e.ClusterID, instances)
 	if err != nil {
 		return err
 	}
