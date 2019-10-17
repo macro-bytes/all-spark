@@ -93,7 +93,6 @@ func destroyCluster(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	monitor.DeregisterCluster(clusterID)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully destroyed cluster"))
 }
