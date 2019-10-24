@@ -69,10 +69,13 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	}
 
 	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
-		env := []string{"MASTER_IP=" + masterIP, "SPARK_WORKER_PORT=7078"}
+		envVariables = append([]string{"MASTER_IP=" + masterIP,
+			"SPARK_WORKER_PORT=7078"},
+			envVariables...)
+
 		for i := 1; i <= e.WorkerNodes; i++ {
 			identifier := e.ClusterID + workerIdentifier + strconv.Itoa(i)
-			e.createSparkNode(identifier, env)
+			e.createSparkNode(identifier, envVariables)
 		}
 	} else {
 		return "", errors.New("master node has failed to come online")

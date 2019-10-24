@@ -192,7 +192,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 			switch status.Status {
 			case StatusPending:
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
-					StatusPending, clusterID)
+					status.Status, clusterID)
 				if currentTime-status.Timestamp > pendingTimeout {
 					client.DestroyCluster()
 					DeregisterCluster(clusterID)
@@ -200,7 +200,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				break
 			case StatusIdle:
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
-					StatusIdle, clusterID)
+					status.Status, clusterID)
 				if currentTime-status.Timestamp > idleTimeout {
 					client.DestroyCluster()
 					DeregisterCluster(clusterID)
@@ -208,15 +208,15 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				break
 			case StatusRunning:
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
-					StatusRunning, clusterID)
+					status.Status, clusterID)
 				if currentTime-status.Timestamp > maxRuntime {
 					client.DestroyCluster()
 					DeregisterCluster(clusterID)
 				}
 				break
-			case StatusDone:
+			case StatusDone, StatusError:
 				logger.GetInfo().Printf("monitor reported %s for cluster %s, terminating cluster",
-					StatusDone, clusterID)
+					status.Status, clusterID)
 				err := client.DestroyCluster()
 				if err != nil {
 					logger.GetError().Println(err)
