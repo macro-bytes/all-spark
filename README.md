@@ -2,7 +2,7 @@
 
 * `git clone https://github.com/macrobytes/allspark-orchestrator.git`
 * `cd allspark-orchestrator`
-* `make install_prerequisites`
+* `make setup`
 * `make all`
 
 
