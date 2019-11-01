@@ -156,6 +156,10 @@ func (e *AwsEnvironment) launchWorkers(masterIP string) (*ec2.Reservation, error
 	userData := "MASTER_IP=" + masterIP +
 		"\nSPARK_WORKER_PORT=7078"
 
+	for _, el := range e.EnvParams {
+		userData += "\n" + el
+	}
+
 	return e.launchInstances(e.ClusterID+workerIdentifier,
 		e.WorkerNodes, userData)
 }
