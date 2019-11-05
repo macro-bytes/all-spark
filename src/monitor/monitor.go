@@ -67,7 +67,10 @@ func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 		CloudEnvironment: priorClusterState.CloudEnvironment,
 	}
 
-	setStatus(clusterID, epochStatus)
+	if priorClusterState.Status != StatusDone &&
+		priorClusterState.Status != StatusError {
+		setStatus(clusterID, epochStatus)
+	}
 }
 
 // RegisterCluster - registers newly created spark
@@ -100,7 +103,6 @@ func getReportedStatus(status cloud.SparkClusterStatus) string {
 		if status.CompletedApps[0].State != StatusFinished {
 			return StatusError
 		}
-		return StatusDone
 	}
 
 	return StatusIdle
@@ -202,8 +204,9 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
 					status.Status, clusterID)
 				if currentTime-status.Timestamp > idleTimeout {
-					client.DestroyCluster()
-					DeregisterCluster(clusterID)
+					status.Status = StatusDone
+					status.Timestamp = getTimestamp()
+					setStatus(clusterID, status)
 				}
 				break
 			case StatusRunning:
