@@ -7,6 +7,32 @@ import (
 	"util/serializer"
 )
 
+func TestDuplicateClusterIDHandler(t *testing.T) {
+	var client cloud.AwsEnvironment
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	DeregisterCluster(client.ClusterID)
+	err = RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+	if err == nil {
+		t.Error("expected dupicate cluster error")
+	}
+
+	DeregisterCluster(client.ClusterID)
+
+}
 func TestHandleCheckinError(t *testing.T) {
 	idle := `{
 "url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
@@ -81,6 +107,8 @@ func TestHandleCheckinError(t *testing.T) {
 		t.Error("-expected: " + StatusError)
 		t.Error("-actual: " + status)
 	}
+
+	DeregisterCluster(client.ClusterID)
 }
 
 func TestHandleCheckinIdle(t *testing.T) {
@@ -147,6 +175,8 @@ func TestHandleCheckinIdle(t *testing.T) {
 		t.Error("-expected: " + StatusIdle)
 		t.Error("-actual: " + status)
 	}
+
+	DeregisterCluster(client.ClusterID)
 }
 
 func TestHandleCheckinRunning(t *testing.T) {
@@ -223,6 +253,8 @@ func TestHandleCheckinRunning(t *testing.T) {
 		t.Error("-expected: " + StatusRunning)
 		t.Error("-actual: " + status)
 	}
+
+	DeregisterCluster(client.ClusterID)
 }
 
 func TestPendingTimeoutMonitor(t *testing.T) {
@@ -254,6 +286,8 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 		t.Error("-expected: " + StatusNotRegistered)
 		t.Error("-actual: " + status)
 	}
+
+	DeregisterCluster(client.ClusterID)
 }
 
 func TestIdleTimeoutMonitor(t *testing.T) {
@@ -273,7 +307,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 		Timestamp:        time.Now().Unix(),
 		CloudEnvironment: cloud.Aws,
 		Status:           StatusIdle,
-	})
+	}, true)
 
 	Run(1, 9999, 5, 9999, 5)
 	status := GetLastKnownStatus(client.ClusterID)
@@ -317,7 +351,7 @@ func TestMaxRuntime(t *testing.T) {
 		Timestamp:        time.Now().Unix(),
 		CloudEnvironment: cloud.Aws,
 		Status:           StatusRunning,
-	})
+	}, true)
 
 	Run(1, 5, 9999, 9999, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
@@ -353,7 +387,7 @@ func TestDoneReportTime(t *testing.T) {
 		Timestamp:        time.Now().Unix(),
 		CloudEnvironment: cloud.Aws,
 		Status:           StatusDone,
-	})
+	}, true)
 
 	Run(1, 9999, 9999, 9999, 5)
 	status := GetLastKnownStatus(client.ClusterID)

@@ -3,6 +3,7 @@ package monitor
 import (
 	"cloud"
 	"datastore"
+	"errors"
 	"logger"
 	"os"
 	"time"
@@ -69,21 +70,28 @@ func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 
 	if priorClusterState.Status != StatusDone &&
 		priorClusterState.Status != StatusError {
-		setStatus(clusterID, epochStatus)
+		setStatus(clusterID, epochStatus, true)
 	}
 }
 
 // RegisterCluster - registers newly created spark
 // cluster with a pending status
-func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient []byte) {
+func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient []byte) error {
 	logger.GetInfo().Printf("registering cluster: %s, %s, %s",
 		clusterID, cloudEnvironment, serializedClient)
-	setStatus(clusterID, SparkClusterStatusAtEpoch{
+
+	success := setStatus(clusterID, SparkClusterStatusAtEpoch{
 		Status:           StatusPending,
 		Timestamp:        getTimestamp(),
 		Client:           serializedClient,
 		CloudEnvironment: cloudEnvironment,
-	})
+	}, false)
+
+	if !success {
+		return errors.New("cluster" + clusterID + " already exists")
+	}
+
+	return nil
 }
 
 // DeregisterCluster - registers newly created spark
@@ -131,7 +139,7 @@ func GetLastKnownStatus(clusterID string) string {
 	return clusterState.Status
 }
 
-func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
+func setStatus(clusterID string, status SparkClusterStatusAtEpoch, overwrite bool) bool {
 	logger.GetInfo().Printf("setting status %s, status: %+v", clusterID, status.Status)
 	client := datastore.GetRedisClient()
 	defer client.Close()
@@ -141,7 +149,11 @@ func setStatus(clusterID string, status SparkClusterStatusAtEpoch) {
 		logger.GetError().Println(err)
 	}
 
-	client.HSet(statusMap, clusterID, string(result))
+	if overwrite {
+		return client.HSet(statusMap, clusterID, string(result)).Val()
+	}
+
+	return client.HSetNX(statusMap, clusterID, string(result)).Val()
 }
 
 // Run - daemon used for monitoring all spark clusters;
@@ -153,7 +165,7 @@ func Run(iterations int, maxRuntime int64, idleTimeout int64,
 	if iterations <= 0 {
 		for {
 			if acquireLock() {
-				logger.GetInfo().Println("acquired lock")
+				logger.GetDebug().Println("acquired lock")
 				monitorClusterHelper(maxRuntime, idleTimeout,
 					pendingTimeout, doneReportTime)
 				releaseLock()
@@ -206,7 +218,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				if currentTime-status.Timestamp > idleTimeout {
 					status.Status = StatusDone
 					status.Timestamp = getTimestamp()
-					setStatus(clusterID, status)
+					setStatus(clusterID, status, true)
 				}
 				break
 			case StatusRunning:

@@ -9,6 +9,7 @@ import (
 	"util/netutil"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
@@ -26,9 +27,19 @@ type AwsEnvironment struct {
 	IAMRole          string
 	KeyName          string
 	EnvParams        []string
+	AssumeArn        string
 }
 
 func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
+	if len(e.AssumeArn) > 0 {
+		sess := session.Must(session.NewSession(&aws.Config{
+			Region: aws.String(e.Region)},
+		))
+
+		creds := stscreds.NewCredentials(sess, e.AssumeArn)
+		return ec2.New(sess, &aws.Config{Credentials: creds})
+	}
+
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(e.Region)},
 	)

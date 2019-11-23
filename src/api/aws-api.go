@@ -63,7 +63,12 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = client.CreateCluster()
+	serializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		logger.GetError().Println(err)
+	}
+
+	err = monitor.RegisterCluster(client.ClusterID, cloud.Aws, serializedClient)
 	if err != nil {
 		logger.GetError().Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
@@ -71,12 +76,14 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serializedClient, err := serializer.Serialize(client)
+	_, err = client.CreateCluster()
 	if err != nil {
-		logger.GetError().Println(err)
+		logger.GetError().Println(err.Error())
+		monitor.DeregisterCluster(client.ClusterID)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
 	}
-
-	monitor.RegisterCluster(client.ClusterID, cloud.Aws, serializedClient)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully launched cluster"))

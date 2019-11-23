@@ -57,19 +57,27 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = client.CreateCluster()
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
 	serializedClient, err := serializer.Serialize(client)
 	if err != nil {
 		logger.GetError().Println(err)
 	}
 
-	monitor.RegisterCluster(client.ClusterID, cloud.Docker, serializedClient)
+	err = monitor.RegisterCluster(client.ClusterID, cloud.Docker, serializedClient)
+	if err != nil {
+		logger.GetError().Println(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	_, err = client.CreateCluster()
+	if err != nil {
+		logger.GetError().Println(err.Error())
+		monitor.DeregisterCluster(client.ClusterID)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("successfully launched cluster"))

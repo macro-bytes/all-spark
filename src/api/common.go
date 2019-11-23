@@ -120,7 +120,7 @@ func checkIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("healthCheck")
+	logger.GetDebug().Println("healthCheck")
 	err := validateRequest(r, "GET")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

@@ -13,6 +13,13 @@ func GetInfo() *log.Logger {
 		log.Lshortfile)
 }
 
+// GetDebug - logs informational messages to STDOUT
+func GetDebug() *log.Logger {
+	return log.New(os.Stdout,
+		time.Now().Format("[2006-01-02 15:04:05]")+" DEBUG: ",
+		log.Lshortfile)
+}
+
 // GetError - logs error message to STDERR
 func GetError() *log.Logger {
 	return log.New(os.Stderr,
