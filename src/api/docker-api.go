@@ -48,6 +48,10 @@ func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
 	return &template, nil
 }
 
+func terminateDocker(w http.ResponseWriter, r *http.Request) {
+	terminate(w, r, cloud.Docker)
+}
+
 func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 	logger.GetInfo().Println("createClusterDocker")
 	client, err := validateDockerFormBody(r)
@@ -85,5 +89,6 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 
 // InitDockerAPI - Initialize the Docker REST API
 func InitDockerAPI() {
-	http.HandleFunc("/docker/createCluster", createClusterDocker)
+	http.HandleFunc("/docker/create", createClusterDocker)
+	http.HandleFunc("/docker/terminate", terminateDocker)
 }

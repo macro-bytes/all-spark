@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"regexp"
 	"strconv"
 	"testing"
 	"util/serializer"
@@ -22,6 +23,59 @@ func getAwsClient(t *testing.T) CloudEnvironment {
 	}
 
 	return cloud
+}
+
+func TestResolveAMI(t *testing.T) {
+	var spec AwsEnvironment
+
+	err := serializer.DeserializePath(awsTemplatePath, &spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	amiID, err := spec.resolveAMI()
+	if err != nil {
+		t.Error(err)
+	}
+
+	regex := regexp.MustCompile(`^ami-[a-z0-9]{17}$`)
+	if !regex.MatchString(amiID) {
+		t.Error("failed to resolve AMI ID.")
+	}
+
+	spec.Image = []imageFilter{
+		{
+			Name:   "name",
+			Values: []string{"ami-test"},
+		},
+	}
+
+	amiID, err = spec.resolveAMI()
+	if err == nil {
+		t.Error("expected failure to resolve AMI, " +
+			"as the filters should resolve more than 1")
+	}
+
+	spec.Image = []imageFilter{
+		{
+			Name:   "name",
+			Values: []string{"ami-test"},
+		},
+		{
+			Name:   "owner-id",
+			Values: []string{"228170507697"},
+		},
+	}
+
+	amiID, err = spec.resolveAMI()
+	if err != nil {
+		t.Error(err)
+	}
+
+	regex = regexp.MustCompile(`^ami-[a-z0-9]{17}$`)
+	if !regex.MatchString(amiID) {
+		t.Error("failed to resolve AMI ID.")
+	}
 }
 
 func TestCreateAwsCluster(t *testing.T) {

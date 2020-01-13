@@ -45,8 +45,8 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(status))
 }
 
-func destroyCluster(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("destroyCluster")
+func terminate(w http.ResponseWriter, r *http.Request, environment string) {
+	logger.GetInfo().Println("terminate")
 	err := validateRequest(r, "POST")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -61,14 +61,20 @@ func destroyCluster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientBuffer, environment, err := monitor.GetClientData(clusterID)
+	clientBuffer, clientEnvironment, err := monitor.GetClientData(clusterID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Unable to retrieve status for clusterID " + clusterID))
 		return
 	}
 
-	client, err := cloud.Create(environment, clientBuffer)
+	if clientEnvironment != environment {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("cloud environment does not match for clusterID " + clusterID))
+		return
+	}
+
+	client, err := cloud.Create(clientEnvironment, clientBuffer)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Unable to establish allspark client with clusterID " + clusterID))
@@ -143,9 +149,8 @@ func Init() {
 		logger.GetFatal().Fatalln("invalid cloud environment specified")
 	}
 
-	http.HandleFunc("/checkIn", checkIn)
-	http.HandleFunc("/getStatus", getStatus)
-	http.HandleFunc("/healthCheck", healthCheck)
-	http.HandleFunc("/destroyCluster", destroyCluster)
+	http.HandleFunc("/check-in", checkIn)
+	http.HandleFunc("/status", getStatus)
+	http.HandleFunc("/health-check", healthCheck)
 	http.ListenAndServe(":32418", nil)
 }

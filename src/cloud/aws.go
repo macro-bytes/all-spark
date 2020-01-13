@@ -3,6 +3,7 @@ package cloud
 import (
 	"daemon"
 	b64 "encoding/base64"
+	"errors"
 	"logger"
 	"strconv"
 	"time"
@@ -14,10 +15,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+type imageFilter struct {
+	Name   string
+	Values []string
+}
+
 // AwsEnvironment interface
 type AwsEnvironment struct {
 	ClusterID        string
-	ImageID          string
+	Image            []imageFilter
 	InstanceType     string
 	EBSVolumeSize    int64
 	SubnetID         string
@@ -51,15 +57,48 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 	return ec2.New(sess)
 }
 
+func (e *AwsEnvironment) resolveAMI() (string, error) {
+	cli := e.getEc2Client()
+
+	imageFilters := make([]*ec2.Filter, len(e.Image))
+	for idx, el := range e.Image {
+		imageFilters[idx] = &ec2.Filter{
+			Name:   aws.String(el.Name),
+			Values: aws.StringSlice(el.Values),
+		}
+	}
+
+	resp, err := cli.DescribeImages(
+		&ec2.DescribeImagesInput{
+			Filters: imageFilters,
+		},
+	)
+
+	if err != nil {
+		logger.GetError().Println(e)
+	}
+
+	if len(resp.Images) > 1 {
+		return "", errors.New("image filters returned " +
+			"more than one image; unable to resolve AMI")
+	}
+
+	return *resp.Images[0].ImageId, err
+}
+
 func (e *AwsEnvironment) launchInstances(identifier string,
 	instanceCount int64, userData string) (*ec2.Reservation, error) {
 
 	cli := e.getEc2Client()
-
 	encodedUserData := b64.StdEncoding.EncodeToString([]byte(userData))
 
+	imageID, err := e.resolveAMI()
+	if err != nil {
+		return nil, err
+	}
+
 	input := &ec2.RunInstancesInput{
-		ImageId:          aws.String(e.ImageID),
+		ImageId:          aws.String(imageID),
 		InstanceType:     aws.String(e.InstanceType),
 		MinCount:         aws.Int64(instanceCount),
 		MaxCount:         aws.Int64(instanceCount),
@@ -72,7 +111,7 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
 			{
-				DeviceName: aws.String("/dev/sda1"),
+				DeviceName: aws.String("/dev/xvda"),
 				Ebs: &ec2.EbsBlockDevice{
 					Encrypted:  aws.Bool(true),
 					VolumeSize: aws.Int64(e.EBSVolumeSize),

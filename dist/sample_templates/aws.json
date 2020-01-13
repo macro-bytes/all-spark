@@ -1,25 +1,24 @@
 {
-    "ClusterID":
-        "aws-spark-cluster",
-    "ImageID":
-        "ami-09c0446d7da721176",
-    "InstanceType":
-        "m5.2xlarge",
-    "EBSVolumeSize":
-        12,
-    "SubnetID":
-        "subnet-0f05559509a1a7971",
-    "SecurityGroupIds":
-        ["sg-0631aa19d85fd7c9b",
-         "sg-0a359f2c2bd058070"],
-    "WorkerNodes":
-        2,
-    "Region":
-        "us-west-2",
-    "IAMRole":
-        "AllSpark-CloudWatchLogging",
-    "KeyName":
-        "wp-2",
+    "ClusterID": "aws-spark-cluster",
+    "Image": [
+        {
+            "Name": "image-id",
+            "Values": [
+                "ami-09c0446d7da721176"
+            ]
+        }
+    ],
+    "InstanceType": "m5.2xlarge",
+    "EBSVolumeSize": 12,
+    "SubnetID": "subnet-0f05559509a1a7971",
+    "SecurityGroupIds": [
+        "sg-0631aa19d85fd7c9b",
+        "sg-0a359f2c2bd058070"
+    ],
+    "WorkerNodes": 2,
+    "Region": "us-west-2",
+    "IAMRole": "AllSpark-CloudWatchLogging",
+    "KeyName": "wp-2",
     "EnvParams": [
         "PARAM=VALUE"
     ]

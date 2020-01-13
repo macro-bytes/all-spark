@@ -14,7 +14,7 @@ func validateAwsTemplate(template cloud.AwsEnvironment) error {
 	if len(template.ClusterID) == 0 ||
 		template.EBSVolumeSize < 10 ||
 		len(template.IAMRole) == 0 ||
-		len(template.ImageID) == 0 ||
+		len(template.Image) == 0 ||
 		len(template.InstanceType) == 0 ||
 		len(template.Region) == 0 ||
 		len(template.SecurityGroupIds) == 0 ||
@@ -51,6 +51,10 @@ func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 	}
 
 	return &template, nil
+}
+
+func terminateAws(w http.ResponseWriter, r *http.Request) {
+	terminate(w, r, cloud.Aws)
 }
 
 func createClusterAws(w http.ResponseWriter, r *http.Request) {
@@ -91,5 +95,6 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 
 // InitAwsAPI - Initialize the AWS REST API
 func InitAwsAPI() {
-	http.HandleFunc("/aws/createCluster", createClusterAws)
+	http.HandleFunc("/aws/create", createClusterAws)
+	http.HandleFunc("/aws/terminate", terminateAws)
 }

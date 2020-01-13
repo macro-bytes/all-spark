@@ -152,25 +152,25 @@ func TestGetStatus(t *testing.T) {
 }
 
 func TestCreateAndDestroyClusterAWS(t *testing.T) {
-	testHTTPRequest(t, createClusterAws, "GET", "/aws/createCluster",
+	testHTTPRequest(t, createClusterAws, "GET", "/aws/create",
 		nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, createClusterAws, "POST", "/aws/createCluster",
+	testHTTPRequest(t, createClusterAws, "POST", "/aws/create",
 		nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, createClusterAws, "POST", "/aws/createCluster",
+	testHTTPRequest(t, createClusterAws, "POST", "/aws/create",
 		bytes.NewReader(getBadCreateFormDataAws()), http.StatusBadRequest,
 		false)
-	testHTTPRequest(t, createClusterAws, "POST", "/aws/createCluster",
+	testHTTPRequest(t, createClusterAws, "POST", "/aws/create",
 		bytes.NewReader(getValidCreateFormDataAws()), http.StatusOK, false)
 
-	testHTTPRequest(t, destroyCluster, "POST", "/destroyCluster",
+	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
 		strings.NewReader(getDestroyClusterFormAws()),
 		http.StatusServiceUnavailable, true)
-	testHTTPRequest(t, destroyCluster, "GET", "/destroyCluster",
+	testHTTPRequest(t, terminateAws, "GET", "/aws/terminate",
 		nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, destroyCluster, "POST", "/destroyCluster",
+	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
 		nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, destroyCluster, "POST",
-		"/destroyCluster", bytes.NewReader(getBadCreateFormDataAws()),
+	testHTTPRequest(t, terminateAws, "POST",
+		"/aws/terminate", bytes.NewReader(getBadCreateFormDataAws()),
 		http.StatusBadRequest, false)
 
 	GetAwsClient(t).DestroyCluster()
@@ -188,15 +188,15 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 		"/docker/createCluster",
 		bytes.NewReader(getValidCreateFormDataDocker()), http.StatusOK, false)
 
-	testHTTPRequest(t, destroyCluster, "POST", "/docker/destroyCluster",
+	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",
 		strings.NewReader(getDestroyClusterFormDocker()),
 		http.StatusServiceUnavailable, true)
-	testHTTPRequest(t, destroyCluster, "GET",
-		"/destroyCluster", nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, destroyCluster, "POST",
-		"/destroyCluster", nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, destroyCluster, "POST",
-		"/destroyCluster", bytes.NewReader(getBadCreateFormDataDocker()),
+	testHTTPRequest(t, terminateDocker, "GET",
+		"/docker/terminate", nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, terminateDocker, "POST",
+		"/docker/terminate", nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, terminateDocker, "POST",
+		"/docker/terminate", bytes.NewReader(getBadCreateFormDataDocker()),
 		http.StatusBadRequest, false)
 
 	getDockerClient(t).DestroyCluster()

@@ -208,6 +208,8 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
 					status.Status, clusterID)
 				if currentTime-status.Timestamp > pendingTimeout {
+					logger.GetInfo().Printf("pending timeout exceeded for cluster %s",
+						clusterID)
 					client.DestroyCluster()
 					DeregisterCluster(clusterID)
 				}
@@ -216,6 +218,8 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
 					status.Status, clusterID)
 				if currentTime-status.Timestamp > idleTimeout {
+					logger.GetInfo().Printf("idle timeout exceeded for cluster %s",
+						clusterID)
 					status.Status = StatusDone
 					status.Timestamp = getTimestamp()
 					setStatus(clusterID, status, true)
@@ -225,6 +229,8 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				logger.GetInfo().Printf("monitor reported %s for cluster %s",
 					status.Status, clusterID)
 				if currentTime-status.Timestamp > maxRuntime {
+					logger.GetInfo().Printf("max run-time exceeded for cluster %s",
+						clusterID)
 					client.DestroyCluster()
 					DeregisterCluster(clusterID)
 				}
