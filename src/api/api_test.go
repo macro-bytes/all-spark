@@ -162,6 +162,9 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 	testHTTPRequest(t, createClusterAws, "POST", "/aws/create",
 		bytes.NewReader(getValidCreateFormDataAws()), http.StatusOK, false)
 
+	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",
+		strings.NewReader(getDestroyClusterFormAws()),
+		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
 		strings.NewReader(getDestroyClusterFormAws()),
 		http.StatusServiceUnavailable, true)
@@ -188,6 +191,9 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 		"/docker/createCluster",
 		bytes.NewReader(getValidCreateFormDataDocker()), http.StatusOK, false)
 
+	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
+		strings.NewReader(getDestroyClusterFormDocker()),
+		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",
 		strings.NewReader(getDestroyClusterFormDocker()),
 		http.StatusServiceUnavailable, true)
