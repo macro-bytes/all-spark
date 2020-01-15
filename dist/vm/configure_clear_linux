@@ -1,7 +1,6 @@
 #!/bin/bash -ex
 
 function clean_up {
-    rm /home/clear/.ssh/authorized_keys
     rm /var/lib/cloud/*
     rm -Rf /allspark/allspark-orchestrator
 }
@@ -93,6 +92,3 @@ swupd update
 configure_allspark
 enable_services
 clean_up
-
-docker pull macrobytes/allspark-spark-worker:latest
-docker tag macrobytes/allspark-spark-worker:latest allspark-worker:latest

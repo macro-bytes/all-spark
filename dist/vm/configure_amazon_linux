@@ -1,7 +1,6 @@
 #!/bin/bash -ex
 
 function clean_up {
-    rm /home/ec2-user/.ssh/authorized_keys
     rm -Rf /var/lib/cloud/*
     rm -Rf /allspark/allspark-orchestrator
 }
@@ -44,6 +43,3 @@ install_packages
 configure_allspark
 enable_services
 clean_up
-
-docker pull macrobytes/allspark-spark-worker:latest
-docker tag macrobytes/allspark-spark-worker:latest allspark-worker:latest
