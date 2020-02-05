@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"context"
+	"daemon"
 	"errors"
 	"logger"
 	"strconv"
@@ -54,7 +55,8 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 	envVariables = []string{expectedWorkers,
 		"SPARK_WORKER_PORT=7078",
 		"CLUSTER_ID=" + e.ClusterID,
-		"EXECUTOR_MEMORY=" + e.computeExecutorMemory()}
+		"EXECUTOR_MEMORY=" + e.computeExecutorMemory(),
+		"ALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL}
 
 	envVariables = append(envVariables, e.EnvParams...)
 

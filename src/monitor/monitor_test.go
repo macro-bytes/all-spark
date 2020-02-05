@@ -271,7 +271,7 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
 
-	Run(1, 9999, 9999, 5, 9999)
+	Run(1, 9999, 9999, 9999, 5, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusPending {
 		t.Error("status mismatch")
@@ -279,11 +279,11 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 9999, 5, 9999)
+	Run(1, 9999, 9999, 9999, 5, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
-	if status != StatusNotRegistered {
+	if status != StatusError {
 		t.Error("status mismatch")
-		t.Error("-expected: " + StatusNotRegistered)
+		t.Error("-expected: " + StatusError)
 		t.Error("-actual: " + status)
 	}
 
@@ -305,11 +305,12 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 	setStatus(client.ClusterID, SparkClusterStatusAtEpoch{
 		Client:           serlializedClient,
 		Timestamp:        time.Now().Unix(),
+		LastCheckIn:      time.Now().Unix(),
 		CloudEnvironment: cloud.Aws,
 		Status:           StatusIdle,
 	}, true)
 
-	Run(1, 9999, 5, 9999, 5)
+	Run(1, 9999, 5, 9999, 9999, 5)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusIdle {
 		t.Error("status mismatch")
@@ -317,7 +318,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 5, 9999, 5)
+	Run(1, 9999, 5, 9999, 9999, 5)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusDone {
 		t.Error("status mismatch")
@@ -325,7 +326,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 5, 9999, 5)
+	Run(1, 9999, 5, 9999, 9999, 5)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusNotRegistered {
 		t.Error("status mismatch")
@@ -349,11 +350,12 @@ func TestMaxRuntime(t *testing.T) {
 	setStatus(client.ClusterID, SparkClusterStatusAtEpoch{
 		Client:           serlializedClient,
 		Timestamp:        time.Now().Unix(),
+		LastCheckIn:      time.Now().Unix(),
 		CloudEnvironment: cloud.Aws,
 		Status:           StatusRunning,
 	}, true)
 
-	Run(1, 5, 9999, 9999, 9999)
+	Run(1, 5, 9999, 9999, 9999, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusRunning {
 		t.Error("status mismatch")
@@ -361,11 +363,48 @@ func TestMaxRuntime(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 5, 9999, 9999, 9999)
+	Run(1, 5, 9999, 9999, 9999, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
-	if status != StatusNotRegistered {
+	if status != StatusError {
 		t.Error("status mismatch")
-		t.Error("-expected: " + StatusNotRegistered)
+		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+}
+
+func TestMaxTimeWithoutCheckin(t *testing.T) {
+	var client cloud.AwsEnvironment
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	setStatus(client.ClusterID, SparkClusterStatusAtEpoch{
+		Client:           serlializedClient,
+		Timestamp:        time.Now().Unix(),
+		LastCheckIn:      time.Now().Unix(),
+		CloudEnvironment: cloud.Aws,
+		Status:           StatusRunning,
+	}, true)
+
+	Run(1, 9999, 9999, 5, 9999, 9999)
+	status := GetLastKnownStatus(client.ClusterID)
+	if status != StatusRunning {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusRunning)
+		t.Error("-actual: " + status)
+	}
+
+	Run(1, 9999, 9999, 5, 9999, 9999)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusError {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusError)
 		t.Error("-actual: " + status)
 	}
 }
@@ -385,11 +424,12 @@ func TestDoneReportTime(t *testing.T) {
 	setStatus(client.ClusterID, SparkClusterStatusAtEpoch{
 		Client:           serlializedClient,
 		Timestamp:        time.Now().Unix(),
+		LastCheckIn:      time.Now().Unix(),
 		CloudEnvironment: cloud.Aws,
 		Status:           StatusDone,
 	}, true)
 
-	Run(1, 9999, 9999, 9999, 5)
+	Run(1, 9999, 9999, 9999, 9999, 5)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusDone {
 		t.Error("status mismatch")
@@ -397,7 +437,7 @@ func TestDoneReportTime(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 9999, 9999, 5)
+	Run(1, 9999, 9999, 9999, 9999, 5)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusNotRegistered {
 		t.Error("status mismatch")

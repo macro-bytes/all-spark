@@ -26,6 +26,7 @@ const (
 // SparkClusterStatusAtEpoch describes the state of a cluster
 // at a given timestamp
 type SparkClusterStatusAtEpoch struct {
+	LastCheckIn      int64
 	Timestamp        int64
 	Status           string
 	Client           []byte
@@ -62,6 +63,7 @@ func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 	}
 
 	epochStatus := SparkClusterStatusAtEpoch{
+		LastCheckIn:      getTimestamp(),
 		Timestamp:        timestamp,
 		Status:           reportedStatus,
 		Client:           priorClusterState.Client,
@@ -160,14 +162,14 @@ func setStatus(clusterID string, status SparkClusterStatusAtEpoch, overwrite boo
 // monitor will run for the specified number of iterations, or indefinitely
 // if iterations <= 0.
 func Run(iterations int, maxRuntime int64, idleTimeout int64,
-	pendingTimeout int64, doneReportTime int64) {
+	maxTimeWithoutCheckin int64, pendingTimeout int64, doneReportTime int64) {
 
 	if iterations <= 0 {
 		for {
 			if acquireLock() {
 				logger.GetDebug().Println("acquired lock")
 				monitorClusterHelper(maxRuntime, idleTimeout,
-					pendingTimeout, doneReportTime)
+					maxTimeWithoutCheckin, pendingTimeout, doneReportTime)
 				releaseLock()
 			}
 			time.Sleep(10 * time.Second)
@@ -176,7 +178,7 @@ func Run(iterations int, maxRuntime int64, idleTimeout int64,
 	for i := 0; i < iterations; i++ {
 		if acquireLock() {
 			monitorClusterHelper(maxRuntime, idleTimeout,
-				pendingTimeout, doneReportTime)
+				maxTimeWithoutCheckin, pendingTimeout, doneReportTime)
 			releaseLock()
 		}
 		time.Sleep(10 * time.Second)
@@ -184,7 +186,7 @@ func Run(iterations int, maxRuntime int64, idleTimeout int64,
 }
 
 func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
-	pendingTimeout int64, doneReportTime int64) {
+	maxTimeWithoutCheckin int64, pendingTimeout int64, doneReportTime int64) {
 
 	redisClient := datastore.GetRedisClient()
 	defer redisClient.Close()
@@ -201,55 +203,64 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 			logger.GetError().Printf("deregistering cluster %v", clusterID)
 			DeregisterCluster(clusterID)
 		} else {
-
 			currentTime := getTimestamp()
-			switch status.Status {
-			case StatusPending:
-				logger.GetInfo().Printf("monitor reported %s for cluster %s",
-					status.Status, clusterID)
-				if currentTime-status.Timestamp > pendingTimeout {
-					logger.GetInfo().Printf("pending timeout exceeded for cluster %s",
-						clusterID)
-					client.DestroyCluster()
-					DeregisterCluster(clusterID)
-				}
-				break
-			case StatusIdle:
-				logger.GetInfo().Printf("monitor reported %s for cluster %s",
-					status.Status, clusterID)
-				if currentTime-status.Timestamp > idleTimeout {
-					logger.GetInfo().Printf("idle timeout exceeded for cluster %s",
-						clusterID)
-					status.Status = StatusDone
-					status.Timestamp = getTimestamp()
-					setStatus(clusterID, status, true)
-				}
-				break
-			case StatusRunning:
-				logger.GetInfo().Printf("monitor reported %s for cluster %s",
-					status.Status, clusterID)
-				if currentTime-status.Timestamp > maxRuntime {
-					logger.GetInfo().Printf("max run-time exceeded for cluster %s",
-						clusterID)
-					client.DestroyCluster()
-					DeregisterCluster(clusterID)
-				}
-				break
-			case StatusDone, StatusError:
-				logger.GetInfo().Printf("monitor reported %s for cluster %s, terminating cluster",
-					status.Status, clusterID)
-				err := client.DestroyCluster()
-				if err != nil {
-					logger.GetError().Println(err)
-				}
-				if currentTime-status.Timestamp > doneReportTime {
-					DeregisterCluster(clusterID)
-				}
-				break
-			default:
-				logger.GetInfo().Printf("monitor reported no status for cluster %s",
+			if currentTime-status.Timestamp > maxTimeWithoutCheckin {
+				logger.GetError().Printf("max time without check-in exceeded for cluster %s",
 					clusterID)
-				break
+				status.Status = StatusError
+				status.Timestamp = getTimestamp()
+				setStatus(clusterID, status, true)
+			} else {
+				switch status.Status {
+				case StatusPending:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
+						status.Status, clusterID)
+					if currentTime-status.Timestamp > pendingTimeout {
+						logger.GetError().Printf("pending timeout exceeded for cluster %s",
+							clusterID)
+						status.Status = StatusError
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
+					}
+					break
+				case StatusIdle:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
+						status.Status, clusterID)
+					if currentTime-status.Timestamp > idleTimeout {
+						logger.GetInfo().Printf("idle timeout exceeded for cluster %s",
+							clusterID)
+						status.Status = StatusDone
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
+					}
+					break
+				case StatusRunning:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
+						status.Status, clusterID)
+					if currentTime-status.Timestamp > maxRuntime {
+						logger.GetError().Printf("max run-time exceeded for cluster %s",
+							clusterID)
+						status.Status = StatusError
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
+					}
+					break
+				case StatusDone, StatusError:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s, terminating cluster",
+						status.Status, clusterID)
+					err := client.DestroyCluster()
+					if err != nil {
+						logger.GetError().Println(err)
+					}
+					if currentTime-status.Timestamp > doneReportTime {
+						DeregisterCluster(clusterID)
+					}
+					break
+				default:
+					logger.GetInfo().Printf("monitor reported no status for cluster %s",
+						clusterID)
+					break
+				}
 			}
 		}
 	}

@@ -181,14 +181,11 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
 	userData := "EXPECTED_WORKERS=" + workers +
 		"\nSPARK_WORKER_PORT=7078" +
-		"\nCLUSTER_ID=" + e.ClusterID
+		"\nCLUSTER_ID=" + e.ClusterID +
+		"\nALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL
 
 	for _, el := range e.EnvParams {
 		userData += "\n" + el
-	}
-
-	if len(daemon.GetAllSparkConfig().CallbackURL) > 0 {
-		userData += "\nALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL
 	}
 
 	res, err := e.launchInstances(e.ClusterID+masterIdentifier, 1, userData)

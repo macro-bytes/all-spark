@@ -1,4 +1,4 @@
-FROM clearlinux:latest
+FROM ubuntu:bionic
 
 EXPOSE 7077
 EXPOSE 7078
@@ -6,20 +6,26 @@ EXPOSE 8080
 EXPOSE 8081
 
 WORKDIR /allspark
+
 ADD init init
 ADD run run
 ADD requirements.txt requirements.txt
 ADD run_monitor.py run_monitor.py
 
-RUN swupd bundle-add curl \
-        cloud-api \
-        git \
+RUN apt-get update && \
+    apt-get install -y python3.7 \
+        python3-pip \
         jq \
-        python3-basic \
+        vim \
+        netcat \
+        git \
+        curl \
         wget \
-        sysadmin-basic \
+        multitail \
         unzip && \
-    pip install -r requirements.txt && \
+    ln -s /usr/bin/python3.7 /usr/bin/python && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1 && \
+    pip3 install -r requirements.txt && \
     rm requirements.txt && \
     wget https://www.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz && \
     tar -xf spark-2.4.4-bin-hadoop2.7.tgz && \

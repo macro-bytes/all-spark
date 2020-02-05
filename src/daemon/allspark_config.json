@@ -9,8 +9,10 @@
         600,
     "ClusterMaxRuntime":
         3600,
+    "ClusterMaxTimeWithoutCheckin":
+        120,
     "CloudEnvironment":
         "docker",
     "CallbackURL":
-        "http://localhost:32418/checkIn"
+        "http://localhost:32418/check-in"
 }
