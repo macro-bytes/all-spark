@@ -1,5 +1,11 @@
 #!/bin/bash -x
 
+rm -f /var/lib/awslogs/agent-state
+rm /var/log/awslogs.log
+rm -Rf /var/log/journal/*
+
+systemctl restart awslogsd.service
+
 while true; do
         /usr/bin/curl -s http://169.254.169.254/latest/meta-data/hostname -o /etc/hostname
         if [ "$?" == "0" ]; then
