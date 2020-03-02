@@ -27,9 +27,9 @@ RUN apt-get update && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1 && \
     pip3 install -r requirements.txt && \
     rm requirements.txt && \
-    wget https://www.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz && \
-    tar -xf spark-2.4.4-bin-hadoop2.7.tgz && \
-    rm spark-2.4.4-bin-hadoop2.7.tgz && \
+    wget https://www.apache.org/dist/spark/spark-2.4.5/spark-2.4.5-bin-hadoop2.7.tgz && \
+    tar -xf spark-2.4.5-bin-hadoop2.7.tgz && \
+    rm spark-2.4.5-bin-hadoop2.7.tgz && \
     wget https://cdn.azul.com/zulu/bin/zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz && \
     tar -xvf zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz && \
     rm zulu8.40.0.25-ca-jdk8.0.222-linux_x64.tar.gz && \
@@ -39,6 +39,6 @@ RUN apt-get update && \
 
 ENV SPARK_WORKER_PORT=7078
 ENV JAVA_HOME=/allspark/zulu8.40.0.25-ca-jdk8.0.222-linux_x64
-ENV SPARK_HOME=/allspark/spark-2.4.4-bin-hadoop2.7
+ENV SPARK_HOME=/allspark/spark-2.4.5-bin-hadoop2.7
 
 ENTRYPOINT /allspark/init
