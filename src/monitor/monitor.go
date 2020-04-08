@@ -204,7 +204,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 			DeregisterCluster(clusterID)
 		} else {
 			currentTime := getTimestamp()
-			if currentTime-status.Timestamp > maxTimeWithoutCheckin {
+			if currentTime-status.LastCheckIn > maxTimeWithoutCheckin {
 				logger.GetError().Printf("max time without check-in exceeded for cluster %s",
 					clusterID)
 				status.Status = StatusError

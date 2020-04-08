@@ -9,6 +9,8 @@
         600,
     "ClusterMaxRuntime":
         3600,
+    "ClusterMaxTimeWithoutCheckin":
+        600,
     "CloudEnvironment":
         "docker",
     "CallbackURL":
