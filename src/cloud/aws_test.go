@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strconv"
 	"testing"
+	"time"
 	"util/serializer"
 )
 
@@ -111,6 +112,7 @@ func TestCreateAwsCluster(t *testing.T) {
 func TestDestroyAwsCluster(t *testing.T) {
 	cloud := getAwsClient(t)
 	cloud.DestroyCluster()
+	time.Sleep(60 * time.Second)
 
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {

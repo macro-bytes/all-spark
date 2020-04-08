@@ -54,11 +54,12 @@ func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 }
 
 func terminateAws(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("http-request: /aws/terminate")
 	terminate(w, r, cloud.Aws)
 }
 
 func createClusterAws(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("createClusterAws")
+	logger.GetInfo().Println("http-request: /aws/create")
 	client, err := validateAwsFormBody(r)
 	if err != nil {
 		logger.GetError().Println(err.Error())

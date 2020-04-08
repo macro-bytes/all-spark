@@ -33,12 +33,13 @@ func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
 		return nil, err
 	}
 
+	logger.GetInfo().Printf("Form body: %s", buffer)
+
 	var template cloud.DockerEnvironment
 	err = serializer.Deserialize(buffer, &template)
 	if err != nil {
 		return nil, err
 	}
-	logger.GetInfo().Printf("Form body: %s", buffer)
 
 	err = validateDockerTemplate(template)
 	if err != nil {
@@ -49,11 +50,12 @@ func validateDockerFormBody(r *http.Request) (*cloud.DockerEnvironment, error) {
 }
 
 func terminateDocker(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("http-request: /docker/terminate")
 	terminate(w, r, cloud.Docker)
 }
 
 func createClusterDocker(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("createClusterDocker")
+	logger.GetInfo().Println("http-request: /docker/create")
 	client, err := validateDockerFormBody(r)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

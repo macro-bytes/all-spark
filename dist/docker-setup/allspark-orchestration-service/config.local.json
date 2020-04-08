@@ -4,13 +4,13 @@
     "ClusterPendingTimeout":
         600,
     "DoneReportTime":
-        600,
+        300,
     "ClusterIdleTimeout":
         600,
     "ClusterMaxRuntime":
         3600,
     "ClusterMaxTimeWithoutCheckin":
-        600,
+        120,
     "CloudEnvironment":
         "docker",
     "CallbackURL":

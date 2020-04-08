@@ -85,6 +85,7 @@ func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient
 	success := setStatus(clusterID, SparkClusterStatusAtEpoch{
 		Status:           StatusPending,
 		Timestamp:        getTimestamp(),
+		LastCheckIn:      getTimestamp(),
 		Client:           serializedClient,
 		CloudEnvironment: cloudEnvironment,
 	}, false)
@@ -204,7 +205,8 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 			DeregisterCluster(clusterID)
 		} else {
 			currentTime := getTimestamp()
-			if currentTime-status.LastCheckIn > maxTimeWithoutCheckin {
+			if currentTime-status.LastCheckIn > maxTimeWithoutCheckin &&
+				status.Status != StatusDone && status.Status != StatusError {
 				logger.GetError().Printf("max time without check-in exceeded for cluster %s",
 					clusterID)
 				status.Status = StatusError

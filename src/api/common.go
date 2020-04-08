@@ -24,7 +24,7 @@ func validateRequest(r *http.Request, method string) error {
 }
 
 func getStatus(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("getStatus")
+	logger.GetDebug().Println("http-request: /status")
 	err := validateRequest(r, "GET")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -46,7 +46,6 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func terminate(w http.ResponseWriter, r *http.Request, environment string) {
-	logger.GetInfo().Println("terminate")
 	err := validateRequest(r, "POST")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -60,6 +59,8 @@ func terminate(w http.ResponseWriter, r *http.Request, environment string) {
 		w.Write([]byte("clusterID not specified"))
 		return
 	}
+
+	logger.GetInfo().Println("handling termination request for clusterID: " + clusterID)
 
 	clientBuffer, clientEnvironment, err := monitor.GetClientData(clusterID)
 	if err != nil {
@@ -104,7 +105,7 @@ func terminate(w http.ResponseWriter, r *http.Request, environment string) {
 }
 
 func checkIn(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("checkin")
+	logger.GetDebug().Println("http-request: /check-in")
 	err := validateRequest(r, "POST")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -126,7 +127,7 @@ func checkIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
-	logger.GetDebug().Println("healthCheck")
+	logger.GetDebug().Println("http-request: /health-check")
 	err := validateRequest(r, "GET")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
