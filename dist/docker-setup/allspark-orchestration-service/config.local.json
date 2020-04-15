@@ -6,7 +6,7 @@
     "DoneReportTime":
         300,
     "ClusterIdleTimeout":
-        600,
+        60,
     "ClusterMaxRuntime":
         3600,
     "ClusterMaxTimeWithoutCheckin":
