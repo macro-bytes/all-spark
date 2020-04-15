@@ -14,6 +14,7 @@ function write_h2o_flat_file {
     echo $(hostname -I | awk '{ print $1":54321" }') >/shared/buff.txt
     curl -s http://localhost:8080/json/ | grep -i host | cut -d'"' -f4 | awk '{ print $1":54321" }' >>/shared/buff.txt
     mv /shared/buff.txt /shared/flatfile.txt
+    sleep 1
 }
 
 function wait_for_h2o_flat_file {
@@ -28,6 +29,17 @@ function wait_for_h2o_flat_file {
 function launch_h2o {
     HEAP_SIZE=`cat /proc/meminfo | grep MemTotal | awk '{ print int($2/2/1024/1024+1) }'`g
     $JAVA_HOME/bin/java -Xmx$HEAP_SIZE -jar h2odriver-sw3.26.6-2-extended.jar -flatfile /shared/flatfile.txt -name allspark &
+}
+
+function wait_for_h2o_cluster {
+    while true; do
+        H2O_CLUSTER_SIZE=`curl -s http://localhost:54321/3/Cloud | jq .cloud_size`
+        EXPECTED_SIZE=$(($EXPECTED_WORKERS+1))
+        if [ "$H2O_CLUSTER_SIZE" == "$EXPECTED_SIZE" ]; then
+            break
+        fi
+        sleep 1
+    done
 }
 
 function wait_for_spark_cluster {
@@ -49,6 +61,7 @@ if [ -z $MASTER_IP ]; then
     wait_for_spark_cluster
     write_h2o_flat_file
     launch_h2o
+    wait_for_h2o_cluster
 
     /allspark/run_monitor.py &
     /allspark/run
