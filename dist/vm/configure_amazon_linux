@@ -17,6 +17,7 @@ function enable_services {
 function configure_allspark {
     mkdir /shared
     chmod 777 /shared
+    setfacl -d -m g::rwx /shared
 
     mkdir /allspark
     cd /allspark 
