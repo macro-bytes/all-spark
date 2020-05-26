@@ -34,6 +34,7 @@ type AwsEnvironment struct {
 	KeyName          string
 	EnvParams        []string
 	AssumeArn        string
+	ExternalID       string
 }
 
 func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
@@ -42,6 +43,12 @@ func (e *AwsEnvironment) getEc2Client() *ec2.EC2 {
 			Region: aws.String(e.Region)},
 		))
 
+		if len(e.ExternalID) > 0 {
+			creds := stscreds.NewCredentials(sess, e.AssumeArn, func(p *stscreds.AssumeRoleProvider) {
+				p.ExternalID = aws.String(e.ExternalID)
+			})
+			return ec2.New(sess, &aws.Config{Credentials: creds})
+		}
 		creds := stscreds.NewCredentials(sess, e.AssumeArn)
 		return ec2.New(sess, &aws.Config{Credentials: creds})
 	}
