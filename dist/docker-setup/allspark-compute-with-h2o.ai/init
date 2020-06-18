@@ -27,8 +27,7 @@ function wait_for_h2o_leader {
 }
 
 function launch_h2o {
-    HEAP_SIZE=`cat /proc/meminfo | grep MemTotal | awk '{ print int($2/2/1024/1024+1) }'`g
-    $JAVA_HOME/bin/java -Xmx$HEAP_SIZE -jar h2odriver-sw3.26.6-2-extended.jar -flatfile /shared/flatfile.txt -name allspark &
+    $JAVA_HOME/bin/java -jar h2odriver-sw3.26.6-2-extended.jar -flatfile /shared/flatfile.txt -name allspark &
 }
 
 function wait_for_h2o_cluster {

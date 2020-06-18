@@ -6,8 +6,6 @@ import (
 	"errors"
 	"logger"
 	"strconv"
-	"time"
-	"util/netutil"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -220,23 +218,12 @@ func (e *AwsEnvironment) launchWorkers(masterIP string) (*ec2.Reservation, error
 
 // CreateCluster - creates a spark cluster in AWS
 func (e *AwsEnvironment) CreateCluster() (string, error) {
-	instanceID, privateIP, err := e.launchMaster()
+	_, privateIP, err := e.launchMaster()
 	if err != nil {
 		return "", err
 	}
 	_, err = e.launchWorkers(privateIP)
-
-	publicIP, err := e.getPublicIP(instanceID)
-	if err != nil {
-		return "", err
-	}
-
-	if netutil.IsListeningOnPort(publicIP, 8080, 1*time.Second, 60) {
-		logger.GetInfo().Println("spark master node is online")
-	}
-
-	webURL := "http://" + publicIP + ":8080"
-	return webURL, err
+	return "", err
 }
 
 // DestroyCluster - destroys a spark cluster in AWS
