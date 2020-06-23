@@ -179,7 +179,6 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 	GetAwsClient(t).DestroyCluster()
 }
 
-/*
 func TestCreateAndDestroyClusterDocker(t *testing.T) {
 	testHTTPRequest(t, createClusterDocker, "GET",
 		"/docker/createCluster", nil, http.StatusBadRequest, false)
@@ -208,4 +207,3 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 
 	getDockerClient(t).DestroyCluster()
 }
-*/

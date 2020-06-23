@@ -1,6 +1,5 @@
 package cloud
 
-/*
 import (
 	"allspark/util/serializer"
 	"strconv"
@@ -74,4 +73,3 @@ func TestDestroyDockerCluster(t *testing.T) {
 		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
 	}
 }
-*/

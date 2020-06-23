@@ -96,7 +96,7 @@ func (e *DockerEnvironment) DestroyCluster() error {
 	}
 
 	for _, el := range clusterNodes {
-		err = cli.ContainerRemove(context.Background(), el,
+		err = cli.ContainerRemove(context.Background(), el[1:],
 			types.ContainerRemoveOptions{Force: true})
 		if err != nil {
 			return err
