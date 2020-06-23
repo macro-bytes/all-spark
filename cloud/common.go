@@ -1,14 +1,14 @@
 package cloud
 
 import (
+	"allspark/logger"
+	"allspark/util/serializer"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"logger"
 	"net/http"
 	"os"
 	"time"
-	"util/serializer"
 )
 
 // SparkWorker describes the spark worker node state

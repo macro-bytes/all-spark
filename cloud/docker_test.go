@@ -1,13 +1,13 @@
 package cloud
 
 import (
+	"allspark/util/serializer"
 	"strconv"
 	"testing"
-	"util/serializer"
 )
 
 const (
-	dockerTemplatePath = "../../dist/sample_templates/docker.json"
+	dockerTemplatePath = "../dist/sample_templates/docker.json"
 )
 
 func getDockerClient(t *testing.T) CloudEnvironment {

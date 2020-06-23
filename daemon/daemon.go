@@ -1,8 +1,8 @@
 package daemon
 
 import (
-	"logger"
-	"util/serializer"
+	"allspark/logger"
+	"allspark/util/serializer"
 )
 
 // AllSparkConfig - allspark configuration parameters struct

@@ -7,7 +7,7 @@ import (
 )
 
 func TestIsListeningOnPort(t *testing.T) {
-	openPort := 22
+	openPort := 6379
 	closedPort := 60713
 
 	if !IsListeningOnPort("localhost", openPort, 10*time.Second, 1) {

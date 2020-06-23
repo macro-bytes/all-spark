@@ -27,7 +27,7 @@ function configure_allspark {
     cp $DATA_PATH/allspark.service /usr/lib/systemd/system
     cp $DATA_PATH/exports /etc/exports
     cp $DATA_PATH/init /allspark
-    cp $DATA_PATH/awslogs.conf /etc/awslogs/awslogs.conf
+    cp $DATA_PATH/aws/awslogs.conf /etc/awslogs/awslogs.conf
 
     chmod +x /allspark/init
 }

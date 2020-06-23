@@ -1,10 +1,10 @@
 package cloud
 
 import (
-	"daemon"
+	"allspark/daemon"
+	"allspark/logger"
 	b64 "encoding/base64"
 	"errors"
-	"logger"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -86,6 +86,9 @@ func (e *AwsEnvironment) resolveAMI() (string, error) {
 	if len(resp.Images) > 1 {
 		return "", errors.New("image filters returned " +
 			"more than one image; unable to resolve AMI")
+	} else if len(resp.Images) == 0 {
+		return "", errors.New("image filters returned " +
+			"no images; unable to resolve AMI")
 	}
 
 	return *resp.Images[0].ImageId, err
@@ -103,6 +106,7 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 	}
 
 	input := &ec2.RunInstancesInput{
+
 		ImageId:          aws.String(imageID),
 		InstanceType:     aws.String(e.InstanceType),
 		MinCount:         aws.Int64(instanceCount),
@@ -112,6 +116,18 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 		UserData:         aws.String(encodedUserData),
 		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
 			Name: aws.String(e.IAMRole),
+		},
+
+		TagSpecifications: []*ec2.TagSpecification{
+			{
+				ResourceType: aws.String("instance"),
+				Tags: []*ec2.Tag{
+					{
+						Key:   aws.String("Name"),
+						Value: aws.String(identifier),
+					},
+				},
+			},
 		},
 
 		BlockDeviceMappings: []*ec2.BlockDeviceMapping{
@@ -137,16 +153,6 @@ func (e *AwsEnvironment) launchInstances(identifier string,
 	}
 
 	for _, el := range resp.Instances {
-		_, err := cli.CreateTags(&ec2.CreateTagsInput{
-			Resources: []*string{el.InstanceId},
-			Tags: []*ec2.Tag{
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(identifier),
-				},
-			},
-		})
-
 		logger.GetInfo().Printf("launched ec2 instance %s, with identifier %s",
 			*el.InstanceId, identifier)
 

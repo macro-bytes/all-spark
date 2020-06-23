@@ -1,13 +1,13 @@
 package cloud
 
 import (
+	"allspark/daemon"
+	"allspark/logger"
+	"allspark/util/netutil"
 	"context"
-	"daemon"
 	"errors"
-	"logger"
 	"strconv"
 	"time"
-	"util/netutil"
 
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
@@ -34,12 +34,10 @@ const (
 )
 
 func (e *DockerEnvironment) getDockerClient() *client.Client {
-	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		logger.GetError().Println(err)
 	}
-	cli.NegotiateAPIVersion(ctx)
 	return cli
 }
 
@@ -98,7 +96,7 @@ func (e *DockerEnvironment) DestroyCluster() error {
 	}
 
 	for _, el := range clusterNodes {
-		err = cli.ContainerRemove(context.Background(), el,
+		err = cli.ContainerRemove(context.Background(), el[1:],
 			types.ContainerRemoveOptions{Force: true})
 		if err != nil {
 			return err

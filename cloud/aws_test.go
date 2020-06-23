@@ -1,15 +1,15 @@
 package cloud
 
 import (
+	"allspark/util/serializer"
 	"regexp"
 	"strconv"
 	"testing"
 	"time"
-	"util/serializer"
 )
 
 const (
-	awsTemplatePath = "../../dist/sample_templates/aws.json"
+	awsTemplatePath = "../dist/sample_templates/aws.json"
 )
 
 func getAwsClient(t *testing.T) CloudEnvironment {

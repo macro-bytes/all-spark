@@ -1,13 +1,13 @@
 package serializer_test
 
 import (
-	"cloud"
-	"monitor"
+	"allspark/cloud"
+	"allspark/monitor"
+	"allspark/util/serializer"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
-	"util/serializer"
 )
 
 func TestDeserializePath(t *testing.T) {
@@ -17,7 +17,7 @@ func TestDeserializePath(t *testing.T) {
 		t.Error("Expected non-nil error")
 	}
 
-	err = serializer.DeserializePath("../../../dist/sample_templates/docker.json", &template)
+	err = serializer.DeserializePath("../../dist/sample_templates/docker.json", &template)
 	if err != nil {
 		t.Error(err)
 	}
@@ -25,7 +25,7 @@ func TestDeserializePath(t *testing.T) {
 
 func TestSerializeAndDeserializeEpochStatus(t *testing.T) {
 	var dummyClient cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../../dist/sample_templates/aws.json", &dummyClient)
+	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &dummyClient)
 	if err != nil {
 		t.Error(err)
 	}

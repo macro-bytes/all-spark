@@ -1,13 +1,13 @@
 package api
 
 import (
-	"cloud"
+	"allspark/cloud"
+	"allspark/logger"
+	"allspark/monitor"
+	"allspark/util/serializer"
 	"errors"
 	"io/ioutil"
-	"logger"
-	"monitor"
 	"net/http"
-	"util/serializer"
 )
 
 func validateAwsTemplate(template cloud.AwsEnvironment) error {

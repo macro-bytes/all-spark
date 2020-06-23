@@ -3,10 +3,10 @@
 package main
 
 import (
-	"api"
-	"daemon"
-	"logger"
-	"monitor"
+	"allspark/api"
+	"allspark/daemon"
+	"allspark/logger"
+	"allspark/monitor"
 	"os"
 )
 

@@ -3,10 +3,10 @@
 package main
 
 import (
-	"cloud"
+	"allspark/cloud"
+	"allspark/logger"
 	"flag"
 	"fmt"
-	"logger"
 	"os"
 	"time"
 )

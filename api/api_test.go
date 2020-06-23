@@ -1,8 +1,9 @@
 package api
 
 import (
+	"allspark/cloud"
+	"allspark/util/serializer"
 	"bytes"
-	"cloud"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -10,12 +11,11 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"util/serializer"
 )
 
 const (
-	awsTemplatePath    = "../../dist/sample_templates/aws.json"
-	dockerTemplatePath = "../../dist/sample_templates/docker.json"
+	awsTemplatePath    = "../dist/sample_templates/aws.json"
+	dockerTemplatePath = "../dist/sample_templates/docker.json"
 )
 
 func GetAwsClient(t *testing.T) cloud.CloudEnvironment {
@@ -59,7 +59,7 @@ func getBadCreateFormDataAws() []byte {
 
 func getValidCreateFormDataAws() []byte {
 	var template cloud.AwsEnvironment
-	serializer.DeserializePath("../../dist/sample_templates/aws.json",
+	serializer.DeserializePath("../dist/sample_templates/aws.json",
 		&template)
 
 	buff, _ := json.Marshal(template)
@@ -78,7 +78,7 @@ func getBadCreateFormDataDocker() []byte {
 
 func getValidCreateFormDataDocker() []byte {
 	var template cloud.DockerEnvironment
-	serializer.DeserializePath("../../dist/sample_templates/docker.json",
+	serializer.DeserializePath("../dist/sample_templates/docker.json",
 		&template)
 
 	buff, _ := json.Marshal(template)
@@ -87,7 +87,7 @@ func getValidCreateFormDataDocker() []byte {
 
 func getDestroyClusterFormDocker() string {
 	var template cloud.DockerEnvironment
-	serializer.DeserializePath("../../dist/sample_templates/docker.json",
+	serializer.DeserializePath("../dist/sample_templates/docker.json",
 		&template)
 	formData := url.Values{}
 	formData.Set("clusterID", template.ClusterID)
@@ -96,7 +96,7 @@ func getDestroyClusterFormDocker() string {
 
 func getDestroyClusterFormAws() string {
 	var template cloud.AwsEnvironment
-	serializer.DeserializePath("../../dist/sample_templates/aws.json",
+	serializer.DeserializePath("../dist/sample_templates/aws.json",
 		&template)
 	formData := url.Values{}
 	formData.Set("clusterID", template.ClusterID)

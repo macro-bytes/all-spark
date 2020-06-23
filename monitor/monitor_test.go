@@ -1,12 +1,12 @@
 package monitor
 
 import (
+	"allspark/cloud"
+	"allspark/util/serializer"
 	"bytes"
-	"cloud"
 	"strconv"
 	"testing"
 	"time"
-	"util/serializer"
 )
 
 const (
@@ -150,7 +150,7 @@ const (
 
 func TestRegisterCluster(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -200,7 +200,7 @@ func TestRegisterCluster(t *testing.T) {
 
 func TestDuplicateClusterIDHandler(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -225,7 +225,7 @@ func TestDuplicateClusterIDHandler(t *testing.T) {
 }
 func TestHandleCheckinError(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -255,7 +255,7 @@ func TestHandleCheckinError(t *testing.T) {
 
 func TestHandleCheckinIdle(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -285,7 +285,7 @@ func TestHandleCheckinIdle(t *testing.T) {
 
 func TestHandleCheckinRunning(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -315,7 +315,7 @@ func TestHandleCheckinRunning(t *testing.T) {
 
 func TestPendingTimeoutMonitor(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -348,7 +348,7 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 
 func TestIdleTimeoutMonitor(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -393,7 +393,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 
 func TestMaxRuntime(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -430,7 +430,7 @@ func TestMaxRuntime(t *testing.T) {
 
 func TestMaxTimeWithoutCheckin(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,7 +467,7 @@ func TestMaxTimeWithoutCheckin(t *testing.T) {
 
 func TestDoneReportTime(t *testing.T) {
 	var client cloud.AwsEnvironment
-	err := serializer.DeserializePath("../../dist/sample_templates/aws.json", &client)
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {
 		t.Error(err)
 	}

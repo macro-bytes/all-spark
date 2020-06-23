@@ -1,13 +1,14 @@
 package monitor
 
 import (
-	"cloud"
-	"datastore"
+	"allspark/cloud"
+	"allspark/datastore"
+	"allspark/logger"
 	"errors"
-	"logger"
 	"os"
 	"time"
-	"util/serializer"
+
+	"allspark/util/serializer"
 )
 
 // Spark cluster status constants

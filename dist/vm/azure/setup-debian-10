@@ -1,0 +1,48 @@
+#!/bin/bash -ex
+
+function clean_up {
+    rm -Rf /var/lib/cloud/*
+    rm -Rf /allspark/allspark-orchestrator
+}
+
+function enable_services {
+    systemctl start docker
+    systemctl enable docker
+    
+    systemctl enable nfs-server
+    systemctl enable awslogsd
+    systemctl enable allspark
+}
+
+function configure_allspark {
+    mkdir /shared
+    chmod 777 /shared
+    setfacl -d -m g::rwx /shared
+
+    mkdir /allspark
+    cd /allspark 
+    git clone https://github.com/macrobytes/allspark-orchestrator.git
+    DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
+    
+    cp $DATA_PATH/allspark.service /usr/lib/systemd/system
+    cp $DATA_PATH/exports /etc/exports
+    cp $DATA_PATH/init /allspark
+    cp $DATA_PATH/aws/awslogs.conf /etc/awslogs/awslogs.conf
+
+    chmod +x /allspark/init
+}
+
+function install_packages {
+    apt-get -y install docker.io \
+        git \
+        nfs-kernel-server \
+        nfs-common \
+        acl
+}
+
+apt-get update
+apt-get dist-upgrade
+install_packages
+configure_allspark
+enable_services
+clean_up

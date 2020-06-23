@@ -1,14 +1,14 @@
 package api
 
 import (
-	"cloud"
-	"daemon"
+	"allspark/cloud"
+	"allspark/daemon"
+	"allspark/logger"
+	"allspark/monitor"
+	"allspark/util/serializer"
 	"errors"
 	"io/ioutil"
-	"logger"
-	"monitor"
 	"net/http"
-	"util/serializer"
 )
 
 func validateRequest(r *http.Request, method string) error {

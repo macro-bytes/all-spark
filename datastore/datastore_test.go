@@ -1,7 +1,7 @@
 package datastore
 
 import (
-	"daemon"
+	"allspark/daemon"
 	"testing"
 )
 
