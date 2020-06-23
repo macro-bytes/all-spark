@@ -43,6 +43,6 @@ function install_packages {
 apt-get update
 apt-get dist-upgrade
 install_packages
-configure_allspark
-enable_services
+#configure_allspark
+#enable_services
 clean_up
