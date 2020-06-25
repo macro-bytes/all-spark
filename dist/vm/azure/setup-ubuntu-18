@@ -23,7 +23,7 @@ function configure_allspark {
     cd /allspark 
     git clone https://github.com/macrobytes/allspark-orchestrator.git
     
-    cp $DATA_PATH/allspark.service /usr/lib/systemd/system
+    cp $DATA_PATH/allspark.service /etc/systemd/system
     cp $DATA_PATH/exports /etc/exports
     cp $DATA_PATH/azure/init /allspark
     chmod +x /allspark/init
