@@ -35,11 +35,12 @@ function install_packages {
         nfs-kernel-server \
         nfs-common \
         acl \
-        gpg
+        gpg \
+        jq
 }
 
 apt-get update
-apt-get dist-upgrade
+apt-get -y dist-upgrade
 install_packages
 configure_allspark
 enable_services

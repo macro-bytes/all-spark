@@ -1,17 +1,5 @@
 #!/bin/bash -x
 
-function set_host_name {
-        while true; do
-                /usr/bin/curl -s http://169.254.169.254/latest/meta-data/hostname -o /etc/hostname
-                if [ "$?" == "0" ]; then
-                        break
-                fi
-                sleep 1
-        done
-        /usr/bin/hostname -F /etc/hostname
-        export HOSTNAME=`/usr/bin/hostname`
-}
-
 function set_env_variables {
         base64 -d /var/lib/waagent/CustomData >/allspark/env.sh
         source /allspark/env.sh
@@ -28,7 +16,6 @@ function run_allspark_image {
         tail -f /dev/null
 }
 
-set_host_name
 set_env_variables
 mount_shared_volume
 run_allspark_image
