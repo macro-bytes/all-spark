@@ -9,3 +9,5 @@ src/golang.org
 src/google.golang.org
 src/go.opencensus.io
 *.pyc
+allspark_cli
+allspark_daemon

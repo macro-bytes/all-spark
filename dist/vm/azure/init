@@ -1,0 +1,34 @@
+#!/bin/bash -x
+
+function set_host_name {
+        while true; do
+                /usr/bin/curl -s http://169.254.169.254/latest/meta-data/hostname -o /etc/hostname
+                if [ "$?" == "0" ]; then
+                        break
+                fi
+                sleep 1
+        done
+        /usr/bin/hostname -F /etc/hostname
+        export HOSTNAME=`/usr/bin/hostname`
+}
+
+function set_env_variables {
+        base64 -d /var/lib/waagent/CustomData >/allspark/env.sh
+        source /allspark/env.sh
+}
+
+function mount_shared_volume {
+        if [ ! -z $MASTER_IP ]; then
+                mount $MASTER_IP:/shared /shared
+        fi
+}
+
+function run_allspark_image {
+        docker run -d --log-driver journald --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+        tail -f /dev/null
+}
+
+set_host_name
+set_env_variables
+mount_shared_volume
+run_allspark_image

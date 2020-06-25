@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 
+export DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
+
 function clean_up {
     rm -Rf /var/lib/cloud/*
     rm -Rf /allspark/allspark-orchestrator
@@ -22,11 +24,10 @@ function configure_allspark {
     mkdir /allspark
     cd /allspark 
     git clone https://github.com/macrobytes/allspark-orchestrator.git
-    DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
     
     cp $DATA_PATH/allspark.service /usr/lib/systemd/system
     cp $DATA_PATH/exports /etc/exports
-    cp $DATA_PATH/init /allspark
+    cp $DATA_PATH/aws/init /allspark
     cp $DATA_PATH/aws/awslogs.conf /etc/awslogs/awslogs.conf
 
     chmod +x /allspark/init
