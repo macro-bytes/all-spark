@@ -11,8 +11,8 @@ function mount_shared_volume {
         fi
 }
 
-function run_allspark_image {
-        docker run -d --log-driver journald --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+function run_allspark_image {-
+        docker run -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
         tail -f /dev/null
 }
 

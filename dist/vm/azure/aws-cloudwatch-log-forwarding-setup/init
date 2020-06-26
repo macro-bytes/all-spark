@@ -1,0 +1,40 @@
+#!/bin/bash -x
+
+function set_env_variables {
+        base64 -d /var/lib/waagent/CustomData >/allspark/env.sh
+        source /allspark/env.sh
+}
+
+function mount_shared_volume {
+        if [ ! -z $MASTER_IP ]; then
+                mount $MASTER_IP:/shared /shared
+        fi
+}
+
+function run_allspark_image {-
+        docker run -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+        tail -f /dev/null
+}
+
+function set_credentials {
+    RAMDISK_PATH=/ramdisk
+    CREDENTIAL_PATH=$RAMDISK_PATH/.aws
+
+    mkdir $RAMDISK_PATH
+    mount -t tmpfs -o rw,size=1M tmpfs $RAMDISK_PATH
+    mkdir $CREDENTIAL_PATH
+    wget -O $CREDENTIAL_PATH/credentials $CREDENTIALS_URL
+    ln -s $CREDENTIAL_PATH /root/.aws
+}
+
+function configure_logging {
+    sed -i "s/_AZURE_SPARK_NODE_/$HOSTNAME/" /allspark/awslogs.conf
+    curl https://s3.amazonaws.com/aws-cloudwatch/downloads/latest/awslogs-agent-setup.py -O
+    python ./awslogs-agent-setup.py --region us-east-1 --non-interactive --configfile=/allspark/awslogs.conf
+}
+
+set_env_variables
+set_credentials
+configure_logging
+mount_shared_volume
+run_allspark_image

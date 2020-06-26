@@ -1,0 +1,46 @@
+#!/bin/bash -ex
+
+export DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
+
+function clean_up {
+    rm -Rf /allspark/allspark-orchestrator
+}
+
+function enable_services {
+    systemctl start docker
+    systemctl enable docker
+    
+    systemctl enable nfs-server
+    systemctl enable allspark
+}
+
+function configure_allspark {
+    mkdir /shared
+    chmod 777 /shared
+    setfacl -d -m g::rwx /shared
+
+    mkdir /allspark
+    cd /allspark 
+    git clone https://github.com/macrobytes/allspark-orchestrator.git
+    
+    cp $DATA_PATH/allspark.service /etc/systemd/system
+    cp $DATA_PATH/exports /etc/exports
+    cp $DATA_PATH/azure/aws-cloudwatch-log-forwarding-setup/init /allspark
+    cp $DATA_PATH/azure/aws-cloudwatch-log-forwarding-setup/awslogs.conf /allspark
+    chmod +x /allspark/init
+}
+
+function install_packages {
+    apt-get -y install docker.io \
+        git \
+        nfs-kernel-server \
+        nfs-common \
+        acl
+}
+
+apt-get update
+apt-get -y dist-upgrade
+install_packages
+configure_allspark
+enable_services
+clean_up
