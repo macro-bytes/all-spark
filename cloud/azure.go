@@ -111,12 +111,17 @@ func (e *AzureEnvironment) deleteNIC(name string) error {
 	return future.WaitForCompletionRef(context.Background(), cli.Client)
 }
 
-func (e *AzureEnvironment) launchVM() (string, error) {
+func (e *AzureEnvironment) launchVM(name string) (string, error) {
 	cli, err := e.getVMClient()
 	if err != nil {
 		return "", err
 	}
 	ctx := context.Background()
+
+	nic, err := e.createNIC(name)
+	if err != nil {
+		return "", err
+	}
 
 	vmParameters := compute.VirtualMachine{
 		Location: to.StringPtr(e.Region),
@@ -140,7 +145,7 @@ func (e *AzureEnvironment) launchVM() (string, error) {
 			NetworkProfile: &compute.NetworkProfile{
 				NetworkInterfaces: &[]compute.NetworkInterfaceReference{
 					{
-						ID: to.StringPtr("/subscriptions/5bdf2ce9-dc93-4028-9251-ded8d49af5bb/resourceGroups/allspark/providers/Microsoft.Network/networkInterfaces/allsparknetworkinface"),
+						ID: to.StringPtr(nic),
 						NetworkInterfaceReferenceProperties: &compute.NetworkInterfaceReferenceProperties{
 							Primary: to.BoolPtr(true),
 						},
@@ -159,7 +164,7 @@ func (e *AzureEnvironment) launchVM() (string, error) {
 
 // CreateCluster - creates spark clusters
 func (e *AzureEnvironment) CreateCluster() (string, error) {
-	return "", nil
+	return e.launchVM(e.ClusterID + "-master")
 }
 
 // DestroyCluster - destroys spark clusters
