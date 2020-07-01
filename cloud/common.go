@@ -136,7 +136,9 @@ func Create(environment string, clusterConfiguration []byte) (CloudEnvironment, 
 		err := json.Unmarshal(clusterConfiguration, &result)
 		return &result, err
 	case Azure:
-		return &AzureEnvironment{}, nil
+		var result AzureEnvironment
+		err := json.Unmarshal(clusterConfiguration, &result)
+		return &result, err
 	case Docker:
 		var result DockerEnvironment
 		err := json.Unmarshal(clusterConfiguration, &result)
