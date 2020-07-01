@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
@@ -113,6 +114,7 @@ func (e *AzureEnvironment) deleteNIC(name string) error {
 
 func (e *AzureEnvironment) launchVM(name string) (string, error) {
 	cli, err := e.getVMClient()
+
 	if err != nil {
 		return "", err
 	}
@@ -155,11 +157,17 @@ func (e *AzureEnvironment) launchVM(name string) (string, error) {
 		},
 	}
 	future, err := cli.CreateOrUpdate(ctx, e.ResourceGroup, e.ClusterID, vmParameters)
+	err = future.WaitForCompletionRef(ctx, cli.Client)
 	if err != nil {
 		return "", err
 	}
 
-	return "", future.WaitForCompletionRef(ctx, cli.Client)
+	privateIP, err := e.getPrivateIP(name)
+	if err != nil {
+		return "", err
+	}
+
+	return privateIP, nil
 }
 
 // CreateCluster - creates spark clusters
@@ -170,6 +178,26 @@ func (e *AzureEnvironment) CreateCluster() (string, error) {
 // DestroyCluster - destroys spark clusters
 func (e *AzureEnvironment) DestroyCluster() error {
 	return nil
+}
+
+func (e *AzureEnvironment) getPrivateIP(name string) (string, error) {
+	cli, err := e.getNicClient()
+	if err != nil {
+		return "", err
+	}
+
+	nics, err := cli.List(context.Background(), e.ResourceGroup)
+	if err != nil {
+		return "", err
+	}
+
+	for _, el := range nics.Values() {
+		if name == *el.Name {
+			return *(*el.IPConfigurations)[0].PrivateIPAddress, nil
+		}
+	}
+
+	return "", errors.New("private IP not found for VM " + name)
 }
 
 func (e *AzureEnvironment) getClusterNodes() ([]string, error) {
