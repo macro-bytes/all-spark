@@ -8,11 +8,9 @@
     "ResourceGroup": "allspark",
     "VMNet": "AllSparkVNet",
     "VMSubnet": "default",
-    "VMSize": "Standard_D8s_v3",
-    "ImagePublisher": "Canonical",
-    "ImageOffer": "UbuntuServer",
-    "ImageSku": "16.04.0-LTS",
-    "ImageVersion": "latest",
+    "VMSize": "Standard_D2s_v3",
+    "ImageURI": "https://allsparkpublic.blob.core.windows.net/public/allspark.vhd",
+    "ImageStorageAccount": "allsparkpublic",
     "WorkerNodes": 2,
     "EnvParams": [
         "PARAM=VALUE"

@@ -32,7 +32,7 @@ func TestCreateAzureCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := cloud.CreateCluster()
+	_, err = cloud.CreateCluster()
 	if err != nil {
 		t.Fatal(err)
 	}
