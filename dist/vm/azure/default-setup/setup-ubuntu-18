@@ -25,7 +25,7 @@ function configure_allspark {
     
     cp $DATA_PATH/allspark.service /etc/systemd/system
     cp $DATA_PATH/exports /etc/exports
-    cp $DATA_PATH/write_env.py /allspark/write_env.py
+    cp $DATA_PATH/azure/write_env.py /allspark/write_env.py
     cp $DATA_PATH/azure/default-setup/init /allspark
     chmod +x /allspark/init
 }

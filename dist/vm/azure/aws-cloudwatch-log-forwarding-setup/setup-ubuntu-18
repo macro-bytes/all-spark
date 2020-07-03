@@ -25,6 +25,7 @@ function configure_allspark {
     
     cp $DATA_PATH/allspark.service /etc/systemd/system
     cp $DATA_PATH/exports /etc/exports
+    cp $DATA_PATH/azure/write_env.py /allspark/write_env.py
     cp $DATA_PATH/azure/aws-cloudwatch-log-forwarding-setup/init /allspark
     cp $DATA_PATH/azure/aws-cloudwatch-log-forwarding-setup/awslogs.conf /allspark
     chmod +x /allspark/init
@@ -35,7 +36,8 @@ function install_packages {
         git \
         nfs-kernel-server \
         nfs-common \
-        acl
+        acl \
+        jq
 }
 
 apt-get update
