@@ -1,7 +1,8 @@
 #!/bin/bash -x
 
 function set_env_variables {
-        base64 -d /var/lib/waagent/CustomData >/allspark/env.sh
+        META_URL="http://169.254.169.254/metadata/instance?api-version=2019-06-01"
+        curl -s -H Metadata:true --noproxy "*" $META_URL | jq '.compute.tags' | sed -e 's/"//g' | python3 /allspark/write_env.py
         source /allspark/env.sh
 }
 

@@ -1,0 +1,18 @@
+{
+    "ClusterID":"azure-spark-cluster",
+    "SubscriptionID": "5bdf2ce9-dc93-4028-9251-ded8d49af5bb",
+    "Region": "East US",
+    "ClientID": "501be9e5-f3e9-4bb9-b0f9-44a7854e3036",
+    "ClientSecret": "client-secret",
+    "Tenant": "3cc5f53e-d61c-49d5-8041-08205a849a79",
+    "ResourceGroup": "allspark",
+    "VMNet": "AllSparkVNet",
+    "VMSubnet": "default",
+    "VMSize": "Standard_D2s_v3",
+    "ImageURI": "https://allsparkpublic.blob.core.windows.net/public/allspark.vhd",
+    "ImageStorageAccount": "allsparkpublic",
+    "WorkerNodes": 2,
+    "EnvParams": [
+        "PARAM=VALUE"
+    ]
+}
