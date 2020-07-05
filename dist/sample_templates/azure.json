@@ -9,7 +9,7 @@
     "VMNet": "AllSparkVNet",
     "VMSubnet": "default",
     "VMSize": "Standard_D2s_v3",
-    "ImageURI": "https://allsparkpublic.blob.core.windows.net/public/allspark.vhd",
+    "ImageURI": "https://allsparkpublic.blob.core.windows.net/public/allspark-compute.vhd",
     "ImageStorageAccount": "allsparkpublic",
     "WorkerNodes": 2,
     "EnvParams": [

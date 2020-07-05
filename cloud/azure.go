@@ -21,7 +21,7 @@ type AzureEnvironment struct {
 	ResourceGroup       string
 	VMNet               string
 	VMSubnet            string
-	VMSize              string
+	VMSize              compute.VirtualMachineSizeTypes
 	ImageURI            string
 	ImageStorageAccount string
 	WorkerNodes         int64
@@ -204,9 +204,8 @@ func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string
 		Location: to.StringPtr(e.Region),
 		VirtualMachineProperties: &compute.VirtualMachineProperties{
 			HardwareProfile: &compute.HardwareProfile{
-				VMSize: compute.VirtualMachineSizeTypesStandardD8sV3,
+				VMSize: e.VMSize,
 			},
-
 			StorageProfile: &compute.StorageProfile{
 				OsDisk: &compute.OSDisk{
 					Name:         to.StringPtr(name),
@@ -231,21 +230,24 @@ func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string
 		},
 	}
 	future, err := cli.CreateOrUpdate(ctx, e.ResourceGroup, e.ClusterID, vmParameters)
+	if err != nil {
+		return "", err
+	}
+
 	if waitForCompletion {
 		err = future.WaitForCompletionRef(ctx, cli.Client)
 		if err != nil {
 			return "", err
 		}
 
-		privateIP, err := e.getPrivateIP(name)
-		if err != nil {
-			return "", err
-		}
-
-		return privateIP, nil
 	}
 
-	return "", err
+	privateIP, err := e.getPrivateIP(name)
+	if err != nil {
+		return "", err
+	}
+
+	return privateIP, nil
 }
 
 // CreateCluster - creates spark clusters
