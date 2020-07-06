@@ -89,7 +89,7 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("successfully launched cluster"))
 }
 
-// InitDockerAPI - Initialize the Docker REST API
+// InitDockerAPI - Initialize the Docker API
 func InitDockerAPI() {
 	http.HandleFunc("/docker/create", createClusterDocker)
 	http.HandleFunc("/docker/terminate", terminateDocker)

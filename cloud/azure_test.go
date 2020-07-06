@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"allspark/util/serializer"
+	"strconv"
 	"testing"
 )
 
@@ -37,20 +38,45 @@ func TestCreateAzureCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	/*
-		clusterNodes, err := cloud.getClusterNodes()
-		if err != nil {
-			t.Error(err)
-		}
+	clusterNodes, err := cloud.getClusterNodes()
+	if err != nil {
+		t.Error(err)
+	}
 
-		expectedNodeCount := spec.WorkerNodes + 1
-		actualNodeCount := int64(len(clusterNodes))
+	expectedNodeCount := spec.WorkerNodes + 1
+	actualNodeCount := int64(len(clusterNodes))
 
-		if expectedNodeCount != actualNodeCount {
-			t.Error("- expected " + strconv.FormatInt(expectedNodeCount, 10) +
-				" spark nodes.")
-			t.Error("- got " + strconv.FormatInt(actualNodeCount, 10) +
-				" spark nodes.")
-		}
-	*/
+	if expectedNodeCount != actualNodeCount {
+		t.Error("- expected " + strconv.FormatInt(expectedNodeCount, 10) +
+			" spark nodes.")
+		t.Error("- got " + strconv.FormatInt(actualNodeCount, 10) +
+			" spark nodes.")
+	}
+}
+
+func TestDestroyAzureCluster(t *testing.T) {
+	cloud := getVMClient(t)
+	var spec AzureEnvironment
+
+	err := serializer.DeserializePath(azureTemplatePath, &spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = cloud.DestroyCluster()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clusterNodes, err := cloud.getClusterNodes()
+	if err != nil {
+		t.Error(err)
+	}
+
+	actualNodeCount := len(clusterNodes)
+
+	if 0 != actualNodeCount {
+		t.Error("- expected 0 spark nodes.")
+		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
+	}
 }

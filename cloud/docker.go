@@ -68,9 +68,9 @@ func (e *DockerEnvironment) CreateCluster() (string, error) {
 		logger.GetError().Println(err)
 	}
 
-	if netutil.IsListeningOnPort(masterIP, sparkPort, 30*time.Second, 120) {
+	if netutil.IsListeningOnPort(masterIP, sparkMasterPort, 30*time.Second, 120) {
 		envVariables = append([]string{"MASTER_IP=" + masterIP,
-			"SPARK_WORKER_PORT=7078"},
+			"SPARK_WORKER_PORT=" + strconv.FormatInt(sparkWorkerPort, 10)},
 			envVariables...)
 
 		for i := 1; i <= e.WorkerNodes; i++ {

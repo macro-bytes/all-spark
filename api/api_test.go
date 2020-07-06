@@ -16,9 +16,10 @@ import (
 const (
 	awsTemplatePath    = "../dist/sample_templates/aws.json"
 	dockerTemplatePath = "../dist/sample_templates/docker.json"
+	azureTemplatePath  = "../dist/sample_templates/azure.json"
 )
 
-func GetAwsClient(t *testing.T) cloud.CloudEnvironment {
+func getAwsClient(t *testing.T) cloud.CloudEnvironment {
 	templateConfig, err := cloud.ReadTemplateConfiguration(awsTemplatePath)
 	if err != nil {
 		t.Fatal(err)
@@ -46,6 +47,20 @@ func getDockerClient(t *testing.T) cloud.CloudEnvironment {
 	return client
 }
 
+func getAzureClient(t *testing.T) cloud.CloudEnvironment {
+	templateConfig, err := cloud.ReadTemplateConfiguration(azureTemplatePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client, err := cloud.Create(cloud.Docker, templateConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return client
+}
+
 func getBadCreateFormDataAws() []byte {
 	var template = cloud.AwsEnvironment{
 		ClusterID:     "test",
@@ -59,7 +74,7 @@ func getBadCreateFormDataAws() []byte {
 
 func getValidCreateFormDataAws() []byte {
 	var template cloud.AwsEnvironment
-	serializer.DeserializePath("../dist/sample_templates/aws.json",
+	serializer.DeserializePath(awsTemplatePath,
 		&template)
 
 	buff, _ := json.Marshal(template)
@@ -78,7 +93,26 @@ func getBadCreateFormDataDocker() []byte {
 
 func getValidCreateFormDataDocker() []byte {
 	var template cloud.DockerEnvironment
-	serializer.DeserializePath("../dist/sample_templates/docker.json",
+	serializer.DeserializePath(dockerTemplatePath,
+		&template)
+
+	buff, _ := json.Marshal(template)
+	return buff
+}
+
+func getBadCreateFormDataAzure() []byte {
+	var template = cloud.AzureEnvironment{
+		ClusterID: "test",
+		ImageBlob: "does-not-exist",
+	}
+
+	buff, _ := json.Marshal(template)
+	return buff
+}
+
+func getValidCreateFormDataAzure() []byte {
+	var template cloud.AzureEnvironment
+	serializer.DeserializePath(azureTemplatePath,
 		&template)
 
 	buff, _ := json.Marshal(template)
@@ -87,7 +121,7 @@ func getValidCreateFormDataDocker() []byte {
 
 func getDestroyClusterFormDocker() string {
 	var template cloud.DockerEnvironment
-	serializer.DeserializePath("../dist/sample_templates/docker.json",
+	serializer.DeserializePath(dockerTemplatePath,
 		&template)
 	formData := url.Values{}
 	formData.Set("clusterID", template.ClusterID)
@@ -96,7 +130,16 @@ func getDestroyClusterFormDocker() string {
 
 func getDestroyClusterFormAws() string {
 	var template cloud.AwsEnvironment
-	serializer.DeserializePath("../dist/sample_templates/aws.json",
+	serializer.DeserializePath(awsTemplatePath,
+		&template)
+	formData := url.Values{}
+	formData.Set("clusterID", template.ClusterID)
+	return formData.Encode()
+}
+
+func getDestroyClusterFormAzure() string {
+	var template cloud.AzureEnvironment
+	serializer.DeserializePath(azureTemplatePath,
 		&template)
 	formData := url.Values{}
 	formData.Set("clusterID", template.ClusterID)
@@ -165,6 +208,9 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",
 		strings.NewReader(getDestroyClusterFormAws()),
 		http.StatusBadRequest, true)
+	testHTTPRequest(t, terminateDocker, "POST", "/azure/terminate",
+		strings.NewReader(getDestroyClusterFormAws()),
+		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
 		strings.NewReader(getDestroyClusterFormAws()),
 		http.StatusServiceUnavailable, true)
@@ -176,7 +222,38 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 		"/aws/terminate", bytes.NewReader(getBadCreateFormDataAws()),
 		http.StatusBadRequest, false)
 
-	GetAwsClient(t).DestroyCluster()
+	getAwsClient(t).DestroyCluster()
+}
+
+func TestCreateAndDestroyClusterAzure(t *testing.T) {
+	testHTTPRequest(t, createClusterAzure, "GET", "/azure/create",
+		nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, createClusterAzure, "POST", "/azure/create",
+		nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, createClusterAzure, "POST", "/azure/create",
+		bytes.NewReader(getBadCreateFormDataAzure()), http.StatusBadRequest,
+		false)
+	testHTTPRequest(t, createClusterAzure, "POST", "/azure/create",
+		bytes.NewReader(getValidCreateFormDataAzure()), http.StatusOK, false)
+
+	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",
+		strings.NewReader(getDestroyClusterFormAzure()),
+		http.StatusBadRequest, true)
+	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
+		strings.NewReader(getDestroyClusterFormAzure()),
+		http.StatusBadRequest, true)
+	testHTTPRequest(t, terminateAzure, "POST", "/azure/terminate",
+		strings.NewReader(getDestroyClusterFormAzure()),
+		http.StatusServiceUnavailable, true)
+	testHTTPRequest(t, terminateAzure, "GET", "/azure/terminate",
+		nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, terminateAzure, "POST", "/azure/terminate",
+		nil, http.StatusBadRequest, false)
+	testHTTPRequest(t, terminateAzure, "POST",
+		"/azure/terminate", bytes.NewReader(getBadCreateFormDataAzure()),
+		http.StatusBadRequest, false)
+
+	getAzureClient(t).DestroyCluster()
 }
 
 func TestCreateAndDestroyClusterDocker(t *testing.T) {
@@ -192,6 +269,9 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 		bytes.NewReader(getValidCreateFormDataDocker()), http.StatusOK, false)
 
 	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
+		strings.NewReader(getDestroyClusterFormDocker()),
+		http.StatusBadRequest, true)
+	testHTTPRequest(t, terminateAws, "POST", "/azure/terminate",
 		strings.NewReader(getDestroyClusterFormDocker()),
 		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",

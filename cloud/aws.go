@@ -191,7 +191,7 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 
 	workers := strconv.FormatInt(e.WorkerNodes, 10)
 	userData := "EXPECTED_WORKERS=" + workers +
-		"\nSPARK_WORKER_PORT=7078" +
+		"\nSPARK_WORKER_PORT=" + strconv.FormatInt(sparkWorkerPort, 10) +
 		"\nCLUSTER_ID=" + e.ClusterID +
 		"\nALLSPARK_CALLBACK=" + daemon.GetAllSparkConfig().CallbackURL
 
@@ -212,7 +212,7 @@ func (e *AwsEnvironment) launchMaster() (string, string, error) {
 func (e *AwsEnvironment) launchWorkers(masterIP string) (*ec2.Reservation, error) {
 
 	userData := "MASTER_IP=" + masterIP +
-		"\nSPARK_WORKER_PORT=7078"
+		"\nSPARK_WORKER_PORT=" + strconv.FormatInt(sparkWorkerPort, 10)
 
 	for _, el := range e.EnvParams {
 		userData += "\n" + el

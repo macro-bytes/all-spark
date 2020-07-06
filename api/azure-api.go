@@ -10,15 +10,20 @@ import (
 	"net/http"
 )
 
-func validateAwsTemplate(template cloud.AwsEnvironment) error {
+func validateAzureTemplate(template cloud.AzureEnvironment) error {
 	if len(template.ClusterID) == 0 ||
-		template.EBSVolumeSize < 10 ||
-		len(template.IAMRole) == 0 ||
-		len(template.Image) == 0 ||
-		len(template.InstanceType) == 0 ||
+		len(template.SubscriptionID) == 0 ||
 		len(template.Region) == 0 ||
-		len(template.SecurityGroupIds) == 0 ||
-		len(template.SubnetID) == 0 ||
+		len(template.ClientID) == 0 ||
+		len(template.ClientSecret) == 0 ||
+		len(template.Tenant) == 0 ||
+		len(template.ResourceGroup) == 0 ||
+		len(template.VMNet) == 0 ||
+		len(template.VMSubnet) == 0 ||
+		len(template.VMSize) == 0 ||
+		len(template.ImageStorageAccount) == 0 ||
+		len(template.ImageContainer) == 0 ||
+		len(template.ImageBlob) == 0 ||
 		template.WorkerNodes < 2 {
 		return errors.New("invalid template object")
 	}
@@ -26,7 +31,7 @@ func validateAwsTemplate(template cloud.AwsEnvironment) error {
 	return nil
 }
 
-func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
+func validateAzureFormBody(r *http.Request) (*cloud.AzureEnvironment, error) {
 	err := validateRequest(r, "POST")
 	if err != nil {
 		return nil, err
@@ -39,13 +44,13 @@ func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 
 	logger.GetInfo().Printf("Form body: %s", buffer)
 
-	var template cloud.AwsEnvironment
+	var template cloud.AzureEnvironment
 	err = serializer.Deserialize(buffer, &template)
 	if err != nil {
 		return nil, err
 	}
 
-	err = validateAwsTemplate(template)
+	err = validateAzureTemplate(template)
 	if err != nil {
 		return nil, err
 	}
@@ -53,14 +58,14 @@ func validateAwsFormBody(r *http.Request) (*cloud.AwsEnvironment, error) {
 	return &template, nil
 }
 
-func terminateAws(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("http-request: /aws/terminate")
-	terminate(w, r, cloud.Aws)
+func terminateAzure(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("http-request: /azure/terminate")
+	terminate(w, r, cloud.Azure)
 }
 
-func createClusterAws(w http.ResponseWriter, r *http.Request) {
-	logger.GetInfo().Println("http-request: /aws/create")
-	client, err := validateAwsFormBody(r)
+func createClusterAzure(w http.ResponseWriter, r *http.Request) {
+	logger.GetInfo().Println("http-request: /azure/create")
+	client, err := validateAzureFormBody(r)
 	if err != nil {
 		logger.GetError().Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
@@ -73,7 +78,7 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 		logger.GetError().Println(err)
 	}
 
-	err = monitor.RegisterCluster(client.ClusterID, cloud.Aws, serializedClient)
+	err = monitor.RegisterCluster(client.ClusterID, cloud.Azure, serializedClient)
 	if err != nil {
 		logger.GetError().Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
@@ -94,8 +99,8 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("successfully launched cluster"))
 }
 
-// InitAwsAPI - Initialize the AWS API
-func InitAwsAPI() {
-	http.HandleFunc("/aws/create", createClusterAws)
-	http.HandleFunc("/aws/terminate", terminateAws)
+// InitAzureAPI - Initialize the Azure API
+func InitAzureAPI() {
+	http.HandleFunc("/azure/create", createClusterAzure)
+	http.HandleFunc("/azure/terminate", terminateAzure)
 }

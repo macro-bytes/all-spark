@@ -1,8 +1,12 @@
 package cloud
 
 import (
+	"allspark/daemon"
+	"container/list"
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
@@ -22,8 +26,9 @@ type AzureEnvironment struct {
 	VMNet               string
 	VMSubnet            string
 	VMSize              compute.VirtualMachineSizeTypes
-	ImageURI            string
 	ImageStorageAccount string
+	ImageContainer      string
+	ImageBlob           string
 	WorkerNodes         int64
 	EnvParams           []string
 }
@@ -66,6 +71,12 @@ func (e *AzureEnvironment) getDiskClient() (compute.DisksClient, error) {
 	authorizer, err := authConfig.Authorizer()
 	client.Authorizer = authorizer
 	return client, err
+}
+
+func (e *AzureEnvironment) getImageURI() string {
+	return "https://" + e.ImageStorageAccount +
+		".blob.core.windows.net/" + e.ImageContainer +
+		"/" + e.ImageBlob
 }
 
 func (e *AzureEnvironment) getSubnet(ctx context.Context, vnetName string, subnetName string) (network.Subnet, error) {
@@ -126,6 +137,27 @@ func (e *AzureEnvironment) deleteNIC(name string) error {
 	return future.WaitForCompletionRef(context.Background(), cli.Client)
 }
 
+func (e *AzureEnvironment) listNICs() ([]string, error) {
+	cli, err := e.getNicClient()
+	if err != nil {
+		return []string{}, err
+	}
+
+	result, err := cli.List(context.Background(), e.ResourceGroup)
+	if err != nil {
+		return []string{}, err
+	}
+
+	items := make([]string, 0)
+	for _, el := range result.Values() {
+		if strings.Contains(*el.Name, e.ClusterID) {
+			items = append(items, *el.Name)
+		}
+	}
+
+	return items, err
+}
+
 func (e *AzureEnvironment) createDisk(name string) (string, error) {
 	cli, err := e.getDiskClient()
 	if err != nil {
@@ -148,7 +180,7 @@ func (e *AzureEnvironment) createDisk(name string) (string, error) {
 			DiskSizeGB: to.Int32Ptr(30),
 			CreationData: &compute.CreationData{
 				CreateOption:     compute.Import,
-				SourceURI:        to.StringPtr(e.ImageURI),
+				SourceURI:        to.StringPtr(e.getImageURI()),
 				StorageAccountID: to.StringPtr(storageAccountID),
 			},
 		},
@@ -160,6 +192,41 @@ func (e *AzureEnvironment) createDisk(name string) (string, error) {
 	}
 
 	return diskPath, future.WaitForCompletionRef(context.Background(), cli.Client)
+}
+
+func (e *AzureEnvironment) deleteDisk(name string) error {
+	cli, err := e.getDiskClient()
+	if err != nil {
+		return err
+	}
+	future, err := cli.Delete(context.Background(), e.ResourceGroup, name)
+	if err != nil {
+		return err
+	}
+
+	return future.WaitForCompletionRef(context.Background(), cli.Client)
+}
+
+func (e *AzureEnvironment) listDisks() (*list.List, error) {
+	cli, err := e.getDiskClient()
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := cli.ListByResourceGroup(context.Background(), e.ResourceGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	items := list.New()
+
+	for _, el := range result.Values() {
+		if strings.Contains(*el.Name, e.ClusterID) {
+			items.PushBack(*el.Name)
+		}
+	}
+
+	return items, err
 }
 
 func (e *AzureEnvironment) getPrivateIP(name string) (string, error) {
@@ -182,7 +249,9 @@ func (e *AzureEnvironment) getPrivateIP(name string) (string, error) {
 	return "", errors.New("private IP not found for VM " + name)
 }
 
-func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string, error) {
+func (e *AzureEnvironment) createVM(name string, tags map[string]*string,
+	waitForCompletion bool) (string, error) {
+
 	cli, err := e.getVMClient()
 
 	if err != nil {
@@ -195,6 +264,11 @@ func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string
 		return "", err
 	}
 
+	privateIP, err := e.getPrivateIP(name)
+	if err != nil {
+		return "", err
+	}
+
 	disk, err := e.createDisk(name)
 	if err != nil {
 		return "", err
@@ -202,6 +276,7 @@ func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string
 
 	vmParameters := compute.VirtualMachine{
 		Location: to.StringPtr(e.Region),
+		Tags:     tags,
 		VirtualMachineProperties: &compute.VirtualMachineProperties{
 			HardwareProfile: &compute.HardwareProfile{
 				VMSize: e.VMSize,
@@ -229,7 +304,7 @@ func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string
 			},
 		},
 	}
-	future, err := cli.CreateOrUpdate(ctx, e.ResourceGroup, e.ClusterID, vmParameters)
+	future, err := cli.CreateOrUpdate(ctx, e.ResourceGroup, name, vmParameters)
 	if err != nil {
 		return "", err
 	}
@@ -242,24 +317,113 @@ func (e *AzureEnvironment) launchVM(name string, waitForCompletion bool) (string
 
 	}
 
-	privateIP, err := e.getPrivateIP(name)
+	return privateIP, nil
+}
+
+func (e *AzureEnvironment) deleteVM(name string) error {
+	cli, err := e.getVMClient()
 	if err != nil {
-		return "", err
+		return err
+	}
+	future, err := cli.Delete(context.Background(), e.ResourceGroup, name)
+	if err != nil {
+		return err
 	}
 
-	return privateIP, nil
+	err = future.WaitForCompletionRef(context.Background(), cli.Client)
+	if err != nil {
+		return err
+	}
+
+	err = e.deleteDisk(name)
+	if err != nil {
+		return err
+	}
+
+	err = e.deleteNIC(name)
+	return err
+}
+
+func (e *AzureEnvironment) launchMaster() (string, error) {
+	tags := make(map[string]*string)
+
+	tags["EXPECTED_WORKERS"] = to.StringPtr(strconv.FormatInt(e.WorkerNodes, 10))
+	tags["SPARK_WORKER_PORT"] = to.StringPtr(strconv.FormatInt(sparkWorkerPort, 10))
+	tags["CLUSTER_ID"] = to.StringPtr(e.ClusterID)
+	tags["ALLSPARK_CALLBACK"] = to.StringPtr(daemon.GetAllSparkConfig().CallbackURL)
+
+	for _, el := range e.EnvParams {
+		buff := strings.Split(el, "=")
+		tags[buff[0]] = to.StringPtr(buff[1])
+	}
+
+	return e.createVM(e.ClusterID+"-master", tags, false)
+}
+
+func (e *AzureEnvironment) launchWorkers(masterIP string) error {
+	tags := make(map[string]*string)
+
+	tags["MASTER_IP"] = to.StringPtr(masterIP)
+	tags["SPARK_WORKER_PORT"] = to.StringPtr(strconv.FormatInt(sparkWorkerPort, 10))
+
+	for _, el := range e.EnvParams {
+		buff := strings.Split(el, "=")
+		tags[buff[0]] = to.StringPtr(buff[1])
+	}
+
+	var i int64
+	for i = 0; i < e.WorkerNodes; i++ {
+		_, err := e.createVM(e.ClusterID+"-worker-"+strconv.FormatInt(i, 10), tags, false)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // CreateCluster - creates spark clusters
 func (e *AzureEnvironment) CreateCluster() (string, error) {
-	return e.launchVM(e.ClusterID+"-master", true)
+	masterIP, err := e.launchMaster()
+	if err != nil {
+		return "", err
+	}
+
+	return "", e.launchWorkers(masterIP)
 }
 
 // DestroyCluster - destroys spark clusters
 func (e *AzureEnvironment) DestroyCluster() error {
-	return nil
+	vms, err := e.getClusterNodes()
+	if err != nil {
+		return err
+	}
+
+	for _, el := range vms {
+		e.deleteVM(el)
+	}
+
+	return err
 }
 
 func (e *AzureEnvironment) getClusterNodes() ([]string, error) {
-	return []string{}, nil
+	cli, err := e.getVMClient()
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := cli.List(context.Background(), e.ResourceGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]string, 0)
+
+	for _, el := range result.Values() {
+		if strings.Contains(*el.Name, e.ClusterID) {
+			items = append(items, *el.Name)
+		}
+	}
+
+	return items, err
 }

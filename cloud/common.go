@@ -70,7 +70,8 @@ const (
 const (
 	masterIdentifier = "-master"
 	workerIdentifier = "-worker"
-	sparkPort        = 7077
+	sparkMasterPort  = 7077
+	sparkWorkerPort  = 7078
 	aliveWorkers     = "Alive Workers:"
 )
 
