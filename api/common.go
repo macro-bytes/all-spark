@@ -141,13 +141,16 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 
 // Init - initializes the allspark-orchestrator web api
 func Init() {
-	switch daemon.GetAllSparkConfig().CloudEnvironment {
-	case cloud.Aws:
+	if daemon.GetAllSparkConfig().AwsEnabled {
 		InitAwsAPI()
-	case cloud.Docker:
+	}
+
+	if daemon.GetAllSparkConfig().AzureEnabled {
+		InitAzureAPI()
+	}
+
+	if daemon.GetAllSparkConfig().DockerEnabled {
 		InitDockerAPI()
-	default:
-		logger.GetFatal().Fatalln("invalid cloud environment specified")
 	}
 
 	http.HandleFunc("/check-in", checkIn)

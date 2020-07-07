@@ -14,7 +14,9 @@ type AllSparkConfig struct {
 	DoneReportTime               int64
 	ClusterMaxRuntime            int64
 	ClusterMaxTimeWithoutCheckin int64
-	CloudEnvironment             string
+	AzureEnabled                 bool
+	AwsEnabled                   bool
+	DockerEnabled                bool
 	CallbackURL                  string
 }
 

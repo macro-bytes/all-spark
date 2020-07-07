@@ -166,7 +166,7 @@ func testHTTPRequest(t *testing.T,
 
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != expectedStatusCode {
-		t.Errorf("unexpected status code: got %v, expected %v",
+		t.Fatalf("unexpected status code: got %v, expected %v",
 			status, expectedStatusCode)
 	}
 }
@@ -258,14 +258,14 @@ func TestCreateAndDestroyClusterAzure(t *testing.T) {
 
 func TestCreateAndDestroyClusterDocker(t *testing.T) {
 	testHTTPRequest(t, createClusterDocker, "GET",
-		"/docker/createCluster", nil, http.StatusBadRequest, false)
+		"/docker/create", nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, createClusterDocker, "POST",
-		"/docker/createCluster", nil, http.StatusBadRequest, false)
+		"/docker/create", nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, createClusterDocker, "POST",
-		"/docker/createCluster", bytes.NewReader(getBadCreateFormDataDocker()),
+		"/docker/create", bytes.NewReader(getBadCreateFormDataDocker()),
 		http.StatusBadRequest, false)
 	testHTTPRequest(t, createClusterDocker, "POST",
-		"/docker/createCluster",
+		"/docker/create",
 		bytes.NewReader(getValidCreateFormDataDocker()), http.StatusOK, false)
 
 	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",

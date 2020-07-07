@@ -4,6 +4,7 @@ import (
 	"allspark/util/serializer"
 	"strconv"
 	"testing"
+	"time"
 )
 
 const (
@@ -68,6 +69,7 @@ func TestDestroyAzureCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	time.Sleep(3 * time.Minute)
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Error(err)

@@ -115,12 +115,7 @@ func (e *AzureEnvironment) createNIC(name string) (string, error) {
 		},
 	}
 
-	future, err := cli.CreateOrUpdate(context.Background(), e.ResourceGroup, name, nicParams)
-	if err != nil {
-		return "", err
-	}
-
-	err = future.WaitForCompletionRef(context.Background(), cli.Client)
+	_, err = cli.CreateOrUpdate(context.Background(), e.ResourceGroup, name, nicParams)
 	return nicPath, err
 }
 
@@ -129,12 +124,8 @@ func (e *AzureEnvironment) deleteNIC(name string) error {
 	if err != nil {
 		return err
 	}
-	future, err := cli.Delete(context.Background(), e.ResourceGroup, name)
-	if err != nil {
-		return err
-	}
-
-	return future.WaitForCompletionRef(context.Background(), cli.Client)
+	_, err = cli.Delete(context.Background(), e.ResourceGroup, name)
+	return err
 }
 
 func (e *AzureEnvironment) listNICs() ([]string, error) {
@@ -186,12 +177,8 @@ func (e *AzureEnvironment) createDisk(name string) (string, error) {
 		},
 	}
 
-	future, err := cli.CreateOrUpdate(context.Background(), e.ResourceGroup, name, disk)
-	if err != nil {
-		return "", err
-	}
-
-	return diskPath, future.WaitForCompletionRef(context.Background(), cli.Client)
+	_, err = cli.CreateOrUpdate(context.Background(), e.ResourceGroup, name, disk)
+	return diskPath, err
 }
 
 func (e *AzureEnvironment) deleteDisk(name string) error {
@@ -199,12 +186,8 @@ func (e *AzureEnvironment) deleteDisk(name string) error {
 	if err != nil {
 		return err
 	}
-	future, err := cli.Delete(context.Background(), e.ResourceGroup, name)
-	if err != nil {
-		return err
-	}
-
-	return future.WaitForCompletionRef(context.Background(), cli.Client)
+	_, err = cli.Delete(context.Background(), e.ResourceGroup, name)
+	return err
 }
 
 func (e *AzureEnvironment) listDisks() (*list.List, error) {
@@ -304,6 +287,7 @@ func (e *AzureEnvironment) createVM(name string, tags map[string]*string,
 			},
 		},
 	}
+
 	future, err := cli.CreateOrUpdate(ctx, e.ResourceGroup, name, vmParameters)
 	if err != nil {
 		return "", err
@@ -325,12 +309,7 @@ func (e *AzureEnvironment) deleteVM(name string) error {
 	if err != nil {
 		return err
 	}
-	future, err := cli.Delete(context.Background(), e.ResourceGroup, name)
-	if err != nil {
-		return err
-	}
-
-	err = future.WaitForCompletionRef(context.Background(), cli.Client)
+	_, err = cli.Delete(context.Background(), e.ResourceGroup, name)
 	if err != nil {
 		return err
 	}

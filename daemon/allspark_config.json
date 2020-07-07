@@ -11,8 +11,12 @@
         3600,
     "ClusterMaxTimeWithoutCheckin":
         120,
-    "CloudEnvironment":
-        "docker",
+    "DockerEnabled":
+        true,
+    "AzureEnabled":
+        true,
+    "AwsEnabled":
+        true,
     "CallbackURL":
         "http://localhost:32418/check-in"
 }

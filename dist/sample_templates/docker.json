@@ -1,7 +1,7 @@
 {
     "NanoCpus": 1000000000,
     "MemBytes": 1073741824,
-    "ClusterID": "allspark-test-cluster",
+    "ClusterID": "docker-spark-cluster",
     "WorkerNodes": 3,
     "Image": "macrobytes/allspark-compute:latest",
     "Mounts": [

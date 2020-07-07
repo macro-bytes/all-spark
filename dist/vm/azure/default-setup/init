@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+META_URL="http://169.254.169.254/metadata/instance?api-version=2019-06-01"
+
 function set_host_name {
         while true; do
                 curl -s -H Metadata:true --noproxy "*" $META_URL | jq '.compute.name' | sed -e 's/"//g' >/etc/hostname
@@ -8,8 +10,8 @@ function set_host_name {
                 fi
                 sleep 1
         done
-        /usr/bin/hostname -F /etc/hostname
-        export HOSTNAME=`/usr/bin/hostname`
+        /bin/hostname -F /etc/hostname
+        export HOSTNAME=`/bin/hostname`
 }
 
 function set_env_variables {
@@ -24,10 +26,12 @@ function mount_shared_volume {
 }
 
 function run_allspark_image {
-        docker run -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+        DNS=`cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | sed 1q`
+        docker run --dns $DNS -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
         tail -f /dev/null
 }
 
+set_host_name
 set_env_variables
 mount_shared_volume
 run_allspark_image
