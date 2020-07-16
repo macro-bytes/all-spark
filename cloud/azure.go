@@ -332,7 +332,7 @@ func (e *AzureEnvironment) launchMaster() (string, error) {
 	tags["ALLSPARK_CALLBACK"] = to.StringPtr(daemon.GetAllSparkConfig().CallbackURL)
 
 	for _, el := range e.EnvParams {
-		buff := strings.Split(el, "=")
+		buff := strings.SplitN(el, "=", 2)
 		tags[buff[0]] = to.StringPtr(buff[1])
 	}
 
@@ -346,7 +346,7 @@ func (e *AzureEnvironment) launchWorkers(masterIP string) error {
 	tags["SPARK_WORKER_PORT"] = to.StringPtr(strconv.FormatInt(sparkWorkerPort, 10))
 
 	for _, el := range e.EnvParams {
-		buff := strings.Split(el, "=")
+		buff := strings.SplitN(el, "=", 2)
 		tags[buff[0]] = to.StringPtr(buff[1])
 	}
 

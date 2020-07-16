@@ -3,16 +3,20 @@
         "localhost:6379",
     "ClusterPendingTimeout":
         600,
-    "DoneReportTime":
-        300,
     "ClusterIdleTimeout":
-        60,
+        600,
+    "DoneReportTime":
+        600,
     "ClusterMaxRuntime":
         3600,
     "ClusterMaxTimeWithoutCheckin":
         120,
-    "CloudEnvironment":
-        "docker",
+    "DockerEnabled":
+        true,
+    "AzureEnabled":
+        true,
+    "AwsEnabled":
+        true,
     "CallbackURL":
-        ""
+        "http://localhost:32418/check-in"
 }

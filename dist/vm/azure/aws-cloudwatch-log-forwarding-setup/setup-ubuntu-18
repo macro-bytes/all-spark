@@ -37,6 +37,7 @@ function install_packages {
         nfs-kernel-server \
         nfs-common \
         acl \
+        unzip \
         jq
 }
 

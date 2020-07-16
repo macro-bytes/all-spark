@@ -3,6 +3,8 @@ Description=allspark
 After=docker.service
 
 [Service]
+StandardOutput=syslog
+StandardError=syslog
 ExecStart=/allspark/init
 
 [Install]
