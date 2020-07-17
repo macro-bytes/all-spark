@@ -11,7 +11,7 @@ const (
 	azureTemplatePath = "../dist/sample_templates/azure.json"
 )
 
-func getVMClient(t *testing.T) CloudEnvironment {
+func getClient(t *testing.T) CloudEnvironment {
 	templateConfig, err := ReadTemplateConfiguration(azureTemplatePath)
 	if err != nil {
 		t.Fatal(err)
@@ -25,8 +25,21 @@ func getVMClient(t *testing.T) CloudEnvironment {
 	return cloud
 }
 
+func TestGetPrimaryStorageKey(t *testing.T) {
+	client := getClient(t)
+	azureClient := client.(*AzureEnvironment)
+	primaryKey, err := azureClient.getPrimaryStorageKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(primaryKey) == 0 {
+		t.Fatal("unable to retrieve primary storage account key")
+	}
+}
+
 func TestCreateAzureCluster(t *testing.T) {
-	cloud := getVMClient(t)
+	cloud := getClient(t)
 	var spec AzureEnvironment
 
 	err := serializer.DeserializePath(azureTemplatePath, &spec)
@@ -56,7 +69,7 @@ func TestCreateAzureCluster(t *testing.T) {
 }
 
 func TestDestroyAzureCluster(t *testing.T) {
-	cloud := getVMClient(t)
+	cloud := getClient(t)
 	var spec AzureEnvironment
 
 	err := serializer.DeserializePath(azureTemplatePath, &spec)
@@ -69,7 +82,7 @@ func TestDestroyAzureCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	time.Sleep(3 * time.Minute)
+	time.Sleep(5 * time.Minute)
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Error(err)
