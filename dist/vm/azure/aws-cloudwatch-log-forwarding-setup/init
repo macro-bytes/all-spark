@@ -2,26 +2,6 @@
 
 META_URL="http://169.254.169.254/metadata/instance?api-version=2019-06-01"
 
-##
-# AWS presigned URLs can be ~1.5Kb in length, which exceeds the 256 characters
-# limit for Azure tags. To work around this, one can break the URL apart 
-# into multiple tags (e.g. LOGGING_CREDENTIALS_URL_PART_1, 
-# LOGGING_CREDENTIALS_URL_PART_2, etc.) # and then concatenate them to 
-# obtain the download URL.
-##
-if [ -z $LOGGING_CREDENTIALS_URL ]; then
-    source /allspark/env.sh
-    LOGGING_CREDENTIALS_URL=""
-    IDX=1
-    while true; do
-        CURRENT_PART="LOGGING_CREDENTIALS_URL_PART_$IDX"
-        if [ -z ${!CURRENT_PART} ]; then
-            break
-        fi
-        LOGGING_CREDENTIALS_URL+=${!CURRENT_PART}
-        IDX=$(($IDX + 1))
-    done
-fi
 
 function set_host_name {
         while true; do
@@ -59,6 +39,27 @@ function set_credentials {
     mkdir $RAMDISK_PATH
     mount -t tmpfs -o rw,size=1M tmpfs $RAMDISK_PATH
     mkdir $CREDENTIAL_PATH
+
+    ##
+    # AWS presigned URLs can be ~1.5Kb in length, which exceeds the 256 characters
+    # limit for Azure tags. To work around this, one can break the URL apart
+    # into multiple tags (e.g. LOGGING_CREDENTIALS_URL_PART_1,
+    # LOGGING_CREDENTIALS_URL_PART_2, etc.) # and then concatenate them to
+    # obtain the download URL.
+    ##
+    if [ -z $LOGGING_CREDENTIALS_URL ]; then
+        source /allspark/env.sh
+        LOGGING_CREDENTIALS_URL=""
+        IDX=1
+        while true; do
+            CURRENT_PART="LOGGING_CREDENTIALS_URL_PART_$IDX"
+            if [ -z ${!CURRENT_PART} ]; then
+                break
+            fi
+            LOGGING_CREDENTIALS_URL+=${!CURRENT_PART}
+            IDX=$(($IDX + 1))
+        done
+    fi
     curl -s --output $CREDENTIAL_PATH/credentials.zip "$LOGGING_CREDENTIALS_URL"
     unzip $CREDENTIAL_PATH/credentials.zip -d $CREDENTIAL_PATH
     rm $CREDENTIAL_PATH/credentials.zip
