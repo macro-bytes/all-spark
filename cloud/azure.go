@@ -2,11 +2,14 @@ package cloud
 
 import (
 	"allspark/daemon"
+	"allspark/logger"
 	"container/list"
 	"context"
 	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/Azure/azure-sdk-for-go/profiles/2019-03-01/storage/mgmt/storage"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-07-01/compute"
@@ -27,10 +30,19 @@ type AzureEnvironment struct {
 	VMSubnet            string
 	VMSize              compute.VirtualMachineSizeTypes
 	ImageStorageAccount string
+	DataStorageAccount  string
 	ImageContainer      string
 	ImageBlob           string
 	WorkerNodes         int64
 	EnvParams           []string
+}
+
+func (e *AzureEnvironment) getStorageClient() (storage.AccountsClient, error) {
+	authConfig := auth.NewClientCredentialsConfig(e.ClientID, e.ClientSecret, e.Tenant)
+	client := storage.NewAccountsClient(e.SubscriptionID)
+	authorizer, err := authConfig.Authorizer()
+	client.Authorizer = authorizer
+	return client, err
 }
 
 func (e *AzureEnvironment) getNicClient() (network.InterfacesClient, error) {
@@ -82,6 +94,23 @@ func (e *AzureEnvironment) getImageURI() string {
 func (e *AzureEnvironment) getSubnet(ctx context.Context, vnetName string, subnetName string) (network.Subnet, error) {
 	subnetsClient, _ := e.getSubnetClient()
 	return subnetsClient.Get(ctx, e.ResourceGroup, vnetName, subnetName, "")
+}
+
+func (e *AzureEnvironment) getPrimaryStorageKey() (string, error) {
+	client, _ := e.getStorageClient()
+
+	result, err := client.ListKeys(context.Background(), e.ResourceGroup, e.DataStorageAccount)
+	if err != nil {
+		return "", err
+	}
+
+	keyList := *(result.Keys)
+	if len(keyList) == 0 {
+		return "", errors.New("storage account contains no keys")
+	}
+
+	primaryKey := keyList[0].Value
+	return *primaryKey, nil
 }
 
 func (e *AzureEnvironment) createNIC(name string) (string, error) {
@@ -304,23 +333,31 @@ func (e *AzureEnvironment) createVM(name string, tags map[string]*string,
 	return privateIP, nil
 }
 
-func (e *AzureEnvironment) deleteVM(name string) error {
+func (e *AzureEnvironment) deleteVM(name string) {
 	cli, err := e.getVMClient()
 	if err != nil {
-		return err
+		logger.GetError().Println(err)
 	}
-	_, err = cli.Delete(context.Background(), e.ResourceGroup, name)
+
+	future, err := cli.Delete(context.Background(), e.ResourceGroup, name)
 	if err != nil {
-		return err
+		logger.GetError().Println(err)
+	}
+
+	err = future.WaitForCompletionRef(context.Background(), cli.Client)
+	if err != nil {
+		logger.GetError().Println(err)
+	}
+
+	err = e.deleteNIC(name)
+	if err != nil {
+		logger.GetError().Println(err)
 	}
 
 	err = e.deleteDisk(name)
 	if err != nil {
-		return err
+		logger.GetError().Println(err)
 	}
-
-	err = e.deleteNIC(name)
-	return err
 }
 
 func (e *AzureEnvironment) launchMaster() (string, error) {
@@ -330,6 +367,15 @@ func (e *AzureEnvironment) launchMaster() (string, error) {
 	tags["SPARK_WORKER_PORT"] = to.StringPtr(strconv.FormatInt(sparkWorkerPort, 10))
 	tags["CLUSTER_ID"] = to.StringPtr(e.ClusterID)
 	tags["ALLSPARK_CALLBACK"] = to.StringPtr(daemon.GetAllSparkConfig().CallbackURL)
+
+	if len(e.DataStorageAccount) > 0 {
+		tags["DATA_STORAGE_ACCOUNT"] = to.StringPtr(e.DataStorageAccount)
+		storageKey, err := e.getPrimaryStorageKey()
+		if err != nil {
+			return "", err
+		}
+		tags["DATA_STORAGE_KEY"] = to.StringPtr(storageKey)
+	}
 
 	for _, el := range e.EnvParams {
 		buff := strings.SplitN(el, "=", 2)
@@ -379,10 +425,10 @@ func (e *AzureEnvironment) DestroyCluster() error {
 	}
 
 	for _, el := range vms {
-		e.deleteVM(el)
+		go e.deleteVM(el)
 	}
 
-	return err
+	return nil
 }
 
 func (e *AzureEnvironment) getClusterNodes() ([]string, error) {

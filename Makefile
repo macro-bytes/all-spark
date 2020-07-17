@@ -10,12 +10,12 @@ setup_docker_network:
 	docker network create -d bridge allspark_bridged_newtork || true
 
 run_tests: clean setup_docker_network allspark_cli allspark_daemon
-	go test -count=1 -v ./monitor && \
-	go test -count=1 -v ./cloud && \
-	go test -count=1 -v ./api && \
-	go test -count=1 -v ./util/netutil && \
-	go test -count=1 -v ./util/serializer && \
-	go test -count=1 -v ./datastore
+	go test -timeout 1200s -count=1 -v ./monitor && \
+	go test -timeout 1200s -count=1 -v ./cloud && \
+	go test -timeout 1200s -count=1 -v ./api && \
+	go test -timeout 1200s -count=1 -v ./util/netutil && \
+	go test -timeout 1200s -count=1 -v ./util/serializer && \
+	go test -timeout 1200s -count=1 -v ./datastore
 
 clean:
 	docker network rm allspark_bridged_newtork || true && \

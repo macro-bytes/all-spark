@@ -112,7 +112,7 @@ func TestCreateAwsCluster(t *testing.T) {
 func TestDestroyAwsCluster(t *testing.T) {
 	cloud := getAwsClient(t)
 	cloud.DestroyCluster()
-	time.Sleep(60 * time.Second)
+	time.Sleep(5 * time.Minute)
 
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
