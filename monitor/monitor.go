@@ -187,6 +187,13 @@ func Run(iterations int, maxRuntime int64, idleTimeout int64,
 	}
 }
 
+func terminateCluster(client cloud.CloudEnvironment) {
+	err := client.DestroyCluster()
+	if err != nil {
+		logger.GetError().Println(err)
+	}
+}
+
 func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 	maxTimeWithoutCheckin int64, pendingTimeout int64, doneReportTime int64) {
 
@@ -207,54 +214,58 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 		} else {
 			currentTime := getTimestamp()
 			if currentTime-status.LastCheckIn > maxTimeWithoutCheckin &&
-				status.Status != StatusDone && status.Status != StatusError {
-				logger.GetError().Printf("max time without check-in exceeded for cluster %s",
+				status.Status != StatusDone && status.Status != StatusError &&
+				status.Status != StatusPending {
+				logger.GetError().Printf("max time without check-in exceeded for cluster %s; terminating",
 					clusterID)
+
 				status.Status = StatusError
 				status.Timestamp = getTimestamp()
 				setStatus(clusterID, status, true)
+				terminateCluster(client)
 			} else {
 				switch status.Status {
 				case StatusPending:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > pendingTimeout {
-						logger.GetError().Printf("pending timeout exceeded for cluster %s",
+						logger.GetError().Printf("pending timeout exceeded for cluster %s; terminating",
 							clusterID)
+
 						status.Status = StatusError
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
+						terminateCluster(client)
 					}
 					break
 				case StatusIdle:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > idleTimeout {
-						logger.GetInfo().Printf("idle timeout exceeded for cluster %s",
+						logger.GetInfo().Printf("idle timeout exceeded for cluster %s; terminating",
 							clusterID)
+
 						status.Status = StatusDone
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
+						terminateCluster(client)
 					}
 					break
 				case StatusRunning:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > maxRuntime {
-						logger.GetError().Printf("max run-time exceeded for cluster %s",
+						logger.GetError().Printf("max run-time exceeded for cluster %s; terminating",
 							clusterID)
 						status.Status = StatusError
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
+						terminateCluster(client)
 					}
 					break
 				case StatusDone, StatusError:
-					logger.GetInfo().Printf("monitor reported %s for cluster %s, terminating cluster",
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
-					err := client.DestroyCluster()
-					if err != nil {
-						logger.GetError().Println(err)
-					}
 					if currentTime-status.Timestamp > doneReportTime {
 						DeregisterCluster(clusterID)
 					}
