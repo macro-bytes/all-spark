@@ -46,8 +46,11 @@ func GetClientData(clusterID string) ([]byte, string, error) {
 }
 
 // HandleCheckIn - handles spark monitor check-in http requests
-func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
-	logger.GetInfo().Printf("cluster: %v, status: %+v", clusterID, clusterStatus)
+func HandleCheckIn(clusterID string, customStatus string,
+	clusterStatus cloud.SparkClusterStatus) {
+
+	logger.GetInfo().Printf("cluster: %v, custom status: %v, status: %+v",
+		clusterID, customStatus, clusterStatus)
 
 	priorClusterState, err := getLastEpoch(clusterID)
 	if err != nil {
@@ -55,7 +58,17 @@ func HandleCheckIn(clusterID string, clusterStatus cloud.SparkClusterStatus) {
 	}
 
 	var timestamp int64
-	reportedStatus := getReportedStatus(clusterStatus)
+	reportedStatus := getReportedStatus(customStatus, clusterStatus)
+	if reportedStatus == StatusError {
+		logger.GetError().Printf("cluster: %v reported status: %+v", clusterID, StatusError)
+	} else {
+		logger.GetInfo().Printf("cluster: %v reported status: %+v", clusterID, reportedStatus)
+	}
+
+	if reportedStatus == StatusDone || reportedStatus == StatusError {
+		client, _ := cloud.Create(priorClusterState.CloudEnvironment, priorClusterState.Client)
+		terminateCluster(client)
+	}
 
 	if reportedStatus != priorClusterState.Status {
 		timestamp = getTimestamp()
@@ -108,13 +121,18 @@ func DeregisterCluster(clusterID string) {
 	client.HDel(statusMap, clusterID)
 }
 
-func getReportedStatus(status cloud.SparkClusterStatus) string {
+func getReportedStatus(customStatus string, status cloud.SparkClusterStatus) string {
+	if len(customStatus) > 0 {
+		return customStatus
+	}
+
 	if len(status.ActiveApps) > 0 {
 		return StatusRunning
 	} else if len(status.CompletedApps) > 0 {
 		if status.CompletedApps[0].State != StatusFinished {
 			return StatusError
 		}
+		return StatusDone
 	}
 
 	return StatusIdle

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 const (
@@ -254,6 +255,7 @@ func TestCreateAndDestroyClusterAzure(t *testing.T) {
 		http.StatusBadRequest, false)
 
 	getAzureClient(t).DestroyCluster()
+	time.Sleep(5 * time.Minute)
 }
 
 func TestCreateAndDestroyClusterDocker(t *testing.T) {

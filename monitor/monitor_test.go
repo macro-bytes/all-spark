@@ -146,6 +146,55 @@ const (
 		}],
 		"status":"ALIVE"
 	}`
+
+	DoneStateCheckIn = `{
+		"url":"spark://ip-172-30-0-100.us-west-2.compute.internal:7077",
+		"workers":[{
+		"id":"worker-20190904193157-172.30.0.132-7078",
+		"host":"172.30.0.132",
+		"port":7078,
+		"webuiaddress":"http://172.30.0.132:8081",
+		"cores":8,
+		"coresused":0,
+		"coresfree":8,
+		"memory":30348,
+		"memoryused":0,
+		"memoryfree":30348,
+		"state":"ALIVE",
+		"lastheartbeat":1567625653486
+		},{
+		"id":"worker-20190904193157-172.30.0.12-7078",
+		"host":"172.30.0.12",
+		"port":7078,
+		"webuiaddress":"http://172.30.0.12:8081",
+		"cores":8,
+		"coresused":0,
+		"coresfree":8,
+		"memory":30348,
+		"memoryused":0,
+		"memoryfree":30348,
+		"state":"ALIVE",
+		"lastheartbeat":1567625653258
+		}],
+		"aliveworkers":2,
+		"cores":16,
+		"coresused":0,
+		"memory":60696,
+		"memoryused":0,
+		"activeapps":[],
+		"completedapps":[{
+		"id":"app-20190904193210-0000",
+		"starttime":1567625530255,
+		"name":"Sparkling Water Driver",
+		"cores":16,
+		"user":"root",
+		"memoryperslave":1024,
+		"submitdate":"Wed Sep 04 19:32:10 GMT 2019",
+		"state":"FINISHED",
+		"duration":113949
+		}],
+		"status":"ALIVE"
+	}`
 )
 
 func TestRegisterCluster(t *testing.T) {
@@ -242,11 +291,41 @@ func TestHandleCheckinError(t *testing.T) {
 	}
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
-	HandleCheckIn(client.ClusterID, clusterStatus)
+	HandleCheckIn(client.ClusterID, "", clusterStatus)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusError {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+
+	DeregisterCluster(client.ClusterID)
+}
+
+func TestHandleCheckinDone(t *testing.T) {
+	var client cloud.AwsEnvironment
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var clusterStatus cloud.SparkClusterStatus
+	err = serializer.Deserialize([]byte(DoneStateCheckIn), &clusterStatus)
+	if err != nil {
+		t.Error(err)
+	}
+
+	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+	HandleCheckIn(client.ClusterID, "", clusterStatus)
+	status := GetLastKnownStatus(client.ClusterID)
+	if status != StatusDone {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusDone)
 		t.Error("-actual: " + status)
 	}
 
@@ -272,7 +351,7 @@ func TestHandleCheckinIdle(t *testing.T) {
 	}
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
-	HandleCheckIn(client.ClusterID, clusterStatus)
+	HandleCheckIn(client.ClusterID, "", clusterStatus)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusIdle {
 		t.Error("status mismatch")
@@ -302,11 +381,41 @@ func TestHandleCheckinRunning(t *testing.T) {
 	}
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
-	HandleCheckIn(client.ClusterID, clusterStatus)
+	HandleCheckIn(client.ClusterID, "", clusterStatus)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusRunning {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusRunning)
+		t.Error("-actual: " + status)
+	}
+
+	DeregisterCluster(client.ClusterID)
+}
+
+func TestHandleCheckinCustomStatus(t *testing.T) {
+	var client cloud.AwsEnvironment
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	var clusterStatus cloud.SparkClusterStatus
+	err = serializer.Deserialize([]byte(RunningStateCheckIn), &clusterStatus)
+	if err != nil {
+		t.Error(err)
+	}
+
+	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+	HandleCheckIn(client.ClusterID, StatusError, clusterStatus)
+	status := GetLastKnownStatus(client.ClusterID)
+	if status != StatusError {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusError)
 		t.Error("-actual: " + status)
 	}
 
