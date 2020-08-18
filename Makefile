@@ -22,4 +22,4 @@ run_tests: clean setup_docker_network allspark_cli allspark_daemon
 clean:
 	docker network rm allspark_bridged_newtork || true && \
 	rm -f allspark_cli allspark_daemon && \
-	docker rm -f dev-spark-cluster
+	docker rm -f dev-spark-cluster || true

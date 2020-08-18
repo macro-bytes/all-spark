@@ -65,7 +65,8 @@ func HandleCheckIn(clusterID string, customStatus string,
 		logger.GetInfo().Printf("cluster: %v reported status: %+v", clusterID, reportedStatus)
 	}
 
-	if reportedStatus == StatusDone || reportedStatus == StatusError {
+	if (reportedStatus == StatusDone || reportedStatus == StatusError) &&
+		(priorClusterState.Status != StatusDone && priorClusterState.Status != StatusError) {
 		client, _ := cloud.Create(priorClusterState.CloudEnvironment, priorClusterState.Client)
 		terminateCluster(client)
 	}
