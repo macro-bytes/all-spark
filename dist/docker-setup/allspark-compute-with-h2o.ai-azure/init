@@ -1,0 +1,114 @@
+#!/bin/bash -x
+
+function wait_for_spark_master {
+    while true; do
+        MASTER_ALIVE=`nc -z $MASTER_IP 7077`
+        if [ "$?" == "0" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function write_h2o_flat_file {
+    echo $(hostname -I | awk '{ print $1":54321" }') >/shared/buff.txt
+    curl -s http://localhost:8080/json/ | grep -i host | cut -d'"' -f4 | awk '{ print $1":54321" }' >>/shared/buff.txt
+    mv /shared/buff.txt /shared/flatfile.txt
+    sleep 1
+}
+
+function wait_for_h2o_leader {
+    while true; do
+        if [ -e /shared/h2o_leader_ready ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function launch_h2o {
+    $JAVA_HOME/bin/java -jar h2odriver-sw3.26.6-2-extended.jar -flatfile /shared/flatfile.txt -name allspark &
+}
+
+function wait_for_h2o_cluster {
+    while true; do
+        H2O_CLUSTER_SIZE=`curl -s http://localhost:54321/3/Cloud | jq .cloud_size`
+        EXPECTED_SIZE=$(($EXPECTED_WORKERS+1))
+        if [ "$H2O_CLUSTER_SIZE" == "$EXPECTED_SIZE" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function wait_for_spark_cluster {
+    while true; do
+        ALIVE_WORKERS=`curl -s http://localhost:8080/json/ | jq .aliveworkers`
+        if [ "$ALIVE_WORKERS" == "$EXPECTED_WORKERS" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function write_to_host_buffer {
+    IP=`hostname -I | awk '{ print $1 }'`
+    echo "$IP $HOSTNAME" >>/shared/host_buffer.txt
+}
+
+function wait_for_host_buffer {
+    while true; do
+        if [ -e /shared/host_buffer.txt ]; then
+            EXPECTED_HOSTS=$(($EXPECTED_WORKERS + 1))
+            LINE_COUNT=`wc -l /shared/host_buffer.txt | awk '{print $1}'`
+
+            if [ "$LINE_COUNT" == "$EXPECTED_HOSTS" ]; then
+                cat /shared/host_buffer.txt > /shared/resolve.txt
+                cat /shared/resolve.txt >> /etc/hosts
+                break
+            fi
+        fi
+        sleep 1
+    done
+}
+
+function wait_for_host_resolution {
+    while true; do
+        if [ -e /shared/resolve.txt ]; then
+            cat /shared/resolve.txt >> /etc/hosts
+            break
+        fi
+        sleep 1
+    done
+}
+
+
+write_to_host_buffer
+
+if [ -z $MASTER_IP ]; then
+    export MASTER_URL=spark://$(hostname -I | awk '{ print $1 }'):7077
+    export NUM_EXECUTORS=$EXPECTED_WORKERS
+    wait_for_host_buffer
+
+    $SPARK_HOME/sbin/start-master.sh
+
+    wait_for_spark_cluster
+    write_h2o_flat_file
+    launch_h2o
+    sleep 10
+
+    touch /shared/h2o_leader_ready
+    wait_for_h2o_cluster
+
+    /allspark/run_monitor.py &
+    /allspark/run
+else
+    wait_for_host_resolution
+    wait_for_spark_master
+    $SPARK_HOME/sbin/start-slave.sh "spark://$MASTER_IP:7077"
+
+    wait_for_h2o_leader
+    launch_h2o
+fi
+
+tail -f /dev/null

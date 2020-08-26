@@ -123,7 +123,7 @@ func checkIn(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.GetInfo().Printf("Form body: %s", buffer)
 
-	monitor.HandleCheckIn(body.ClusterID, body.CustomStatus, body.Status)
+	monitor.HandleCheckIn(body.ClusterID, body.AppExitStatus, body.Status)
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {

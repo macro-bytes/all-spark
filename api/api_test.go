@@ -54,7 +54,7 @@ func getAzureClient(t *testing.T) cloud.CloudEnvironment {
 		t.Fatal(err)
 	}
 
-	client, err := cloud.Create(cloud.Docker, templateConfig)
+	client, err := cloud.Create(cloud.Azure, templateConfig)
 	if err != nil {
 		t.Fatal(err)
 	}

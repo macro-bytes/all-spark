@@ -1,11 +1,22 @@
 #!/bin/bash
 
-##
-#  Example run command:
-#
-#  $SPARK_HOME/bin/spark-submit --master $MASTER_URL \
-#       --num-executors $NUM_EXECUTORS \
-#       --executor-memory $EXECUTOR_MEMORY \
-#       /python/to/script
-##
-exit 0
+function run_spark_app {
+    ##
+    #  Example run command:
+    #
+    #  $SPARK_HOME/bin/spark-submit --master $MASTER_URL \
+    #       --num-executors $NUM_EXECUTORS \
+    #       --executor-memory $EXECUTOR_MEMORY \
+    #       /python/to/script
+    ##
+
+    EXIT_STATUS=$?
+}
+
+run_spark_app
+
+if [ "$EXIT_STATUS" != "0" ]; then
+    echo "ERROR" > /allspark/exit_status
+    exit 1
+fi
+

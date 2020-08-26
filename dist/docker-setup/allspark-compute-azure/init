@@ -1,0 +1,73 @@
+#!/bin/bash -x
+
+function wait_for_spark_master {
+    while true; do
+        MASTER_ALIVE=`nc -z $MASTER_IP 7077`
+        if [ "$?" == "0" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function wait_for_spark_cluster {
+    while true; do
+        ALIVE_WORKERS=`curl -s http://localhost:8080/json/ | jq .aliveworkers`
+        if [ "$ALIVE_WORKERS" == "$EXPECTED_WORKERS" ]; then
+            break
+        fi
+        sleep 1
+    done
+}
+
+function write_to_host_buffer {
+    IP=`hostname -I | awk '{ print $1 }'`
+    echo "$IP $HOSTNAME" >>/shared/host_buffer.txt
+}
+
+function wait_for_host_buffer {
+    while true; do
+        if [ -e /shared/host_buffer.txt ]; then
+            EXPECTED_HOSTS=$(($EXPECTED_WORKERS + 1))
+            LINE_COUNT=`wc -l /shared/host_buffer.txt | awk '{print $1}'`
+
+            if [ "$LINE_COUNT" == "$EXPECTED_HOSTS" ]; then
+                cat /shared/host_buffer.txt > /shared/resolve.txt
+                cat /shared/resolve.txt >> /etc/hosts
+                break
+            fi
+        fi
+        sleep 1
+    done
+}
+
+function wait_for_host_resolution {
+    while true; do
+        if [ -e /shared/resolve.txt ]; then
+            cat /shared/resolve.txt >> /etc/hosts
+            break
+        fi
+        sleep 1
+    done
+}
+
+
+write_to_host_buffer
+
+if [ -z $MASTER_IP ]; then
+    export MASTER_URL=spark://$(hostname -I | awk '{ print $1 }'):7077
+    export NUM_EXECUTORS=$EXPECTED_WORKERS
+    wait_for_host_buffer
+
+    $SPARK_HOME/sbin/start-master.sh
+
+    wait_for_spark_cluster
+    /allspark/run_monitor.py &
+    /allspark/run
+else
+    wait_for_host_resolution
+    wait_for_spark_master
+    $SPARK_HOME/sbin/start-slave.sh "spark://$MASTER_IP:7077"
+fi
+
+tail -f /dev/null

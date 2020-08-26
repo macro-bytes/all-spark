@@ -392,7 +392,7 @@ func TestHandleCheckinRunning(t *testing.T) {
 	DeregisterCluster(client.ClusterID)
 }
 
-func TestHandleCheckinCustomStatus(t *testing.T) {
+func TestHandleCheckinAppExitStatus(t *testing.T) {
 	var client cloud.AwsEnvironment
 	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
 	if err != nil {

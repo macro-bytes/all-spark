@@ -56,9 +56,9 @@ type SparkClusterStatus struct {
 
 // SparkStatusCheckIn - form body for the /checkin endpoint
 type SparkStatusCheckIn struct {
-	Status       SparkClusterStatus
-	CustomStatus string
-	ClusterID    string
+	Status        SparkClusterStatus
+	AppExitStatus string
+	ClusterID     string
 }
 
 // Supported cloud environments

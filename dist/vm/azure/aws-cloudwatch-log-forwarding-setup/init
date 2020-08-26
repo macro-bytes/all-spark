@@ -4,32 +4,34 @@ META_URL="http://169.254.169.254/metadata/instance?api-version=2019-06-01"
 
 
 function set_host_name {
-        while true; do
-                curl -s -H Metadata:true --noproxy "*" $META_URL | jq '.compute.name' | sed -e 's/"//g' >/etc/hostname
-                if [ "$?" == "0" ]; then
-                        break
-                fi
-                sleep 1
-        done
-        /bin/hostname -F /etc/hostname
-        export HOSTNAME=`/bin/hostname`
+    while true; do
+        curl -s -H Metadata:true --noproxy "*" $META_URL | jq '.compute.name' | sed -e 's/"//g' >/etc/hostname
+        if [ "$?" == "0" ]; then
+            break
+        fi
+        sleep 1
+    done
+    /bin/hostname -F /etc/hostname
+    export HOSTNAME=`/bin/hostname`
 }
 
 function set_env_variables {
-        /usr/bin/curl -s -H Metadata:true --noproxy "*" $META_URL | jq '.compute.tags' | sed -e 's/"//g' | python3 /allspark/write_env.py
-        source /allspark/env.sh
+    /usr/bin/curl -s -H Metadata:true --noproxy "*" $META_URL | jq '.compute.tags' | sed -e 's/"//g' | python3 /allspark/write_env.py
+    source /allspark/env.sh
 }
 
 function mount_shared_volume {
-        if [ ! -z $MASTER_IP ]; then
-                mount $MASTER_IP:/shared /shared
-        fi
+    if [ ! -z $MASTER_IP ]; then
+        mount $MASTER_IP:/shared /shared
+    fi
 }
 
 function run_allspark_image {
-        DNS=`cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | sed 1q`
-        docker run --dns $DNS -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
-        tail -f /dev/null
+    DNS=`cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | sed 1q`
+	cp /allspark/env.sh /allspark/docker_env.sh
+	sed -i 's/"//g' /allspark/docker_env.sh
+    docker run --dns $DNS -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/docker_env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+    tail -f /dev/null
 }
 
 function set_credentials {

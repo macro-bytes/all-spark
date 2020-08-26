@@ -17,6 +17,7 @@ run_tests: clean setup_docker_network allspark_cli allspark_daemon
 	go test -timeout 1200s -count=1 -v ./util/netutil && \
 	go test -timeout 1200s -count=1 -v ./util/serializer && \
 	go test -timeout 1200s -count=1 -v ./datastore && \
+    python3 dist/docker-setup/allspark-compute/test_run_monitor.py && \
     docker rm -f dev-spark-cluster
 
 clean:

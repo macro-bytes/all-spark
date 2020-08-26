@@ -25,6 +25,7 @@ if [ -z $MASTER_IP ]; then
     export NUM_EXECUTORS=$EXPECTED_WORKERS
 
     $SPARK_HOME/sbin/start-master.sh
+
     wait_for_spark_cluster
     /allspark/run_monitor.py &
     /allspark/run
