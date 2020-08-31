@@ -14,7 +14,10 @@ class TestRunMonitor(unittest.TestCase):
             with open(APP_EXIT_STATUS_PATH, "w") as fh:
                 fh.write("ERROR")
 
-        os.remove(APP_EXIT_STATUS_PATH)
+        try:
+            os.remove(APP_EXIT_STATUS_PATH)
+        except:
+            ...
         exit_status = get_app_exit_status()
         assert "" == exit_status
 
@@ -24,3 +27,4 @@ class TestRunMonitor(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

@@ -124,7 +124,8 @@ func DeregisterCluster(clusterID string) {
 
 func getReportedStatus(appExitStatus string, status cloud.SparkClusterStatus) string {
 	if len(appExitStatus) > 0 {
-		return appExitStatus
+		// currently all appExitStates with length > 0 are assumed to be error states
+		return StatusError
 	}
 
 	if len(status.ActiveApps) > 0 {

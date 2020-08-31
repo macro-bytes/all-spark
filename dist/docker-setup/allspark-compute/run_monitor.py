@@ -14,7 +14,7 @@ def get_app_exit_status() -> str:
     """
     if os.path.isfile(APP_EXIT_STATUS_PATH):
         with open(APP_EXIT_STATUS_PATH, "r") as fh:
-            status = fh.read()
+            status = fh.read().strip()
     else:
         status = ""
     return status
