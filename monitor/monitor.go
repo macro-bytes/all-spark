@@ -54,7 +54,18 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 
 	priorClusterState, err := getLastEpoch(clusterID)
 	if err != nil {
-		logger.GetError().Println(err)
+		logger.GetInfo().Printf("cluster: %v appears to have been terminated and deregistered",
+			clusterID)
+	}
+
+	logger.GetInfo().Printf("cluster: %v prior cluster state: %v",
+		clusterID, priorClusterState.Status)
+
+	if priorClusterState.Status == StatusNotRegistered {
+		logger.GetInfo().Printf("cluster: %v checked-in, but is not currently"+
+			" registered and likely set for termination",
+			clusterID)
+		return
 	}
 
 	var timestamp int64
@@ -63,12 +74,6 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 		logger.GetError().Printf("cluster: %v reported status: %+v", clusterID, StatusError)
 	} else {
 		logger.GetInfo().Printf("cluster: %v reported status: %+v", clusterID, reportedStatus)
-	}
-
-	if (reportedStatus == StatusDone || reportedStatus == StatusError) &&
-		(priorClusterState.Status != StatusDone && priorClusterState.Status != StatusError) {
-		client, _ := cloud.Create(priorClusterState.CloudEnvironment, priorClusterState.Client)
-		terminateCluster(client)
 	}
 
 	if reportedStatus != priorClusterState.Status {
@@ -148,7 +153,12 @@ func getLastEpoch(clusterID string) (SparkClusterStatusAtEpoch, error) {
 	err := serializer.Deserialize([]byte(client.HGet(statusMap, clusterID).Val()),
 		&clusterState)
 	if err != nil {
+		clusterState.Status = StatusNotRegistered
 		return clusterState, err
+	}
+
+	if clusterState.Status == "" {
+		clusterState.Status = StatusNotRegistered
 	}
 
 	return clusterState, nil
@@ -287,6 +297,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > doneReportTime {
+						terminateCluster(client)
 						DeregisterCluster(clusterID)
 					}
 					break

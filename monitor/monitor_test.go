@@ -610,3 +610,15 @@ func TestDoneReportTime(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 }
+
+func TestUnregisterdEpochHandler(t *testing.T) {
+	priorStatus, err := getLastEpoch("does-not-exit")
+	if err == nil {
+		t.Error("expected non-nil error")
+	}
+	if priorStatus.Status != StatusNotRegistered {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusNotRegistered)
+		t.Error("-actual: " + priorStatus.Status)
+	}
+}

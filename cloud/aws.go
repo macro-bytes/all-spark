@@ -236,16 +236,21 @@ func (e *AwsEnvironment) CreateCluster() (string, error) {
 func (e *AwsEnvironment) DestroyCluster() error {
 	cli := e.getEc2Client()
 	instances, err := e.getClusterNodes()
-	logger.GetInfo().Printf("destroying cluster %v with instance-ids %v", e.ClusterID, instances)
 	if err != nil {
 		return err
 	}
+	if len(instances) > 0 {
+		logger.GetInfo().Printf("destroying cluster %v with instance-ids %v", e.ClusterID, instances)
 
-	_, err = cli.TerminateInstances(
-		&ec2.TerminateInstancesInput{
-			InstanceIds: aws.StringSlice(instances),
-		},
-	)
+		_, err = cli.TerminateInstances(
+			&ec2.TerminateInstancesInput{
+				InstanceIds: aws.StringSlice(instances),
+			},
+		)
+	} else {
+		logger.GetInfo().Printf("cluster %v nas no instances and may have been terminated", e.ClusterID)
+	}
+
 	return err
 }
 
