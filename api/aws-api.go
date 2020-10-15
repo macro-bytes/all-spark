@@ -83,8 +83,8 @@ func createClusterAws(w http.ResponseWriter, r *http.Request) {
 
 	_, err = client.CreateCluster()
 	if err != nil {
+		// allow the monitor to terminate the instances
 		logger.GetError().Println(err.Error())
-		monitor.DeregisterCluster(client.ClusterID)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return

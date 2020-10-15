@@ -94,6 +94,11 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 		priorClusterState.Status != StatusError {
 		setStatus(clusterID, epochStatus, true)
 	}
+
+	if priorClusterState.Status == StatusDone &&
+		reportedStatus == StatusError {
+		setStatus(clusterID, epochStatus, true)
+	}
 }
 
 // RegisterCluster - registers newly created spark

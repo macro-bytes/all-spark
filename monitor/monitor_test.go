@@ -420,6 +420,26 @@ func TestHandleCheckinAppExitStatus(t *testing.T) {
 	}
 
 	DeregisterCluster(client.ClusterID)
+
+	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+
+	HandleCheckIn(client.ClusterID, StatusError, clusterStatus)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusError {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+
+	HandleCheckIn(client.ClusterID, StatusDone, clusterStatus)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusError {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+
+	DeregisterCluster(client.ClusterID)
 }
 
 func TestPendingTimeoutMonitor(t *testing.T) {
