@@ -22,7 +22,8 @@ func main() {
 		daemon.GetAllSparkConfig().ClusterIdleTimeout,
 		daemon.GetAllSparkConfig().ClusterMaxTimeWithoutCheckin,
 		daemon.GetAllSparkConfig().ClusterPendingTimeout,
-		daemon.GetAllSparkConfig().DoneReportTime)
+		daemon.GetAllSparkConfig().DoneReportTime,
+		daemon.GetAllSparkConfig().CancelTerminationDelay)
 
 	api.Init()
 }

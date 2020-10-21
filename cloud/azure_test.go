@@ -52,6 +52,8 @@ func TestCreateAzureCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	time.Sleep(1 * time.Minute)
+
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Error(err)

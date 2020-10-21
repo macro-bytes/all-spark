@@ -75,7 +75,7 @@ func terminate(w http.ResponseWriter, r *http.Request, environment string) {
 		return
 	}
 
-	client, err := cloud.Create(clientEnvironment, clientBuffer)
+	_, err = cloud.Create(clientEnvironment, clientBuffer)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Unable to establish allspark client with clusterID " + clusterID))
@@ -90,18 +90,10 @@ func terminate(w http.ResponseWriter, r *http.Request, environment string) {
 		return
 	}
 
-	if status != monitor.StatusDone {
-		err = client.DestroyCluster()
-		if err != nil {
-			logger.GetInfo().Printf(err.Error())
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("There was an error destroying clusterID " + clusterID))
-			return
-		}
-	}
+	monitor.SetCanceled(clusterID)
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("successfully destroyed cluster"))
+	w.Write([]byte("received cluster termination request"))
 }
 
 func checkIn(w http.ResponseWriter, r *http.Request) {
