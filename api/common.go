@@ -82,14 +82,6 @@ func terminate(w http.ResponseWriter, r *http.Request, environment string) {
 		return
 	}
 
-	status := monitor.GetLastKnownStatus(clusterID)
-	if status == monitor.StatusPending || status == monitor.StatusIdle {
-		w.WriteHeader(http.StatusTooEarly)
-		w.Write([]byte("unable to destroy cluster " + clusterID +
-			" when status is " + monitor.StatusPending))
-		return
-	}
-
 	monitor.SetCanceled(clusterID)
 
 	w.WriteHeader(http.StatusOK)

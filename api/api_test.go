@@ -214,7 +214,7 @@ func TestCreateAndDestroyClusterAWS(t *testing.T) {
 		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
 		strings.NewReader(getDestroyClusterFormAws()),
-		http.StatusTooEarly, true)
+		http.StatusOK, true)
 	testHTTPRequest(t, terminateAws, "GET", "/aws/terminate",
 		nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, terminateAws, "POST", "/aws/terminate",
@@ -245,7 +245,7 @@ func TestCreateAndDestroyClusterAzure(t *testing.T) {
 		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateAzure, "POST", "/azure/terminate",
 		strings.NewReader(getDestroyClusterFormAzure()),
-		http.StatusTooEarly, true)
+		http.StatusOK, true)
 	testHTTPRequest(t, terminateAzure, "GET", "/azure/terminate",
 		nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, terminateAzure, "POST", "/azure/terminate",
@@ -278,7 +278,7 @@ func TestCreateAndDestroyClusterDocker(t *testing.T) {
 		http.StatusBadRequest, true)
 	testHTTPRequest(t, terminateDocker, "POST", "/docker/terminate",
 		strings.NewReader(getDestroyClusterFormDocker()),
-		http.StatusTooEarly, true)
+		http.StatusOK, true)
 	testHTTPRequest(t, terminateDocker, "GET",
 		"/docker/terminate", nil, http.StatusBadRequest, false)
 	testHTTPRequest(t, terminateDocker, "POST",

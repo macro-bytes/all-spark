@@ -78,7 +78,7 @@ func createClusterDocker(w http.ResponseWriter, r *http.Request) {
 
 	_, err = client.CreateCluster()
 	if err != nil {
-		// allow the monitor to terminate the instances
+		monitor.SetCanceled(client.ClusterID)
 		logger.GetError().Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
