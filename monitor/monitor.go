@@ -24,6 +24,7 @@ const (
 	StatusCanceled      = "CANCELED"
 	statusMap           = "STATUS_MAP"
 	monitorLock         = "MONITOR_LOCK"
+	clusterLockPreifx   = "cluster.lock."
 )
 
 // SparkClusterStatusAtEpoch describes the state of a cluster
@@ -196,6 +197,8 @@ func GetLastKnownStatus(clusterID string) string {
 
 // SetCanceled - Sets the cluster to StatusCanceled so be terminated
 func SetCanceled(clusterID string) error {
+	logger.GetInfo().Printf("handling request to cancel cluster %v ",
+		clusterID)
 	err := acquireClusterLock(clusterID, "canceled", 5)
 	if err != nil {
 		logger.GetError().Println(err)
@@ -404,7 +407,7 @@ func acquireMonitorLock() bool {
 func lockSuccess(clusterID string, prefix string, lockExpiration time.Duration) bool {
 	redisClient := datastore.GetRedisClient()
 	defer redisClient.Close()
-	key := "cluster.lock" + clusterID
+	key := clusterLockPreifx + clusterID
 	value := prefix + strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	return redisClient.SetNX(key, value, lockExpiration*time.Second).Val()
@@ -413,7 +416,7 @@ func lockSuccess(clusterID string, prefix string, lockExpiration time.Duration) 
 func releaseClusterLock(clusterID string) {
 	redisClient := datastore.GetRedisClient()
 	defer redisClient.Close()
-	key := "cluster.lock" + clusterID
+	key := clusterLockPreifx + clusterID
 	redisClient.Del(key)
 }
 
