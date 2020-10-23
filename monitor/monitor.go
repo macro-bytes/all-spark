@@ -213,15 +213,24 @@ func SetCanceled(clusterID string) error {
 		return err
 	}
 
-	epochStatus := SparkClusterStatusAtEpoch{
-		LastCheckIn:      priorClusterState.LastCheckIn,
-		Timestamp:        getTimestamp(),
-		Status:           StatusCanceled,
-		Client:           priorClusterState.Client,
-		CloudEnvironment: priorClusterState.CloudEnvironment,
-	}
+	if priorClusterState.Status != StatusDone &&
+		priorClusterState.Status != StatusError &&
+		priorClusterState.Status != StatusCanceled &&
+		priorClusterState.Status != StatusNotRegistered {
 
-	setStatus(clusterID, epochStatus, true)
+		epochStatus := SparkClusterStatusAtEpoch{
+			LastCheckIn:      priorClusterState.LastCheckIn,
+			Timestamp:        getTimestamp(),
+			Status:           StatusCanceled,
+			Client:           priorClusterState.Client,
+			CloudEnvironment: priorClusterState.CloudEnvironment,
+		}
+
+		setStatus(clusterID, epochStatus, true)
+	} else {
+		logger.GetInfo().Printf("cluster %v with status %v will not be set to canceled",
+			clusterID, priorClusterState.Status)
+	}
 
 	return nil
 }
