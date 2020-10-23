@@ -11,6 +11,8 @@
         3600,
     "ClusterMaxTimeWithoutCheckin":
         120,
+    "CancelTerminationDelay":
+        120,
     "DockerEnabled":
         true,
     "AzureEnabled":

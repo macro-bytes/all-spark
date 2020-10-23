@@ -197,6 +197,51 @@ const (
 	}`
 )
 
+func TestAcquireClusterLock(t *testing.T) {
+	clusterID := "test-cluster"
+	monitorClustePrefix := "monitor"
+	canceledClusterPrefix := "canceled"
+
+	err := acquireClusterLock(clusterID, monitorClustePrefix, 1)
+	if err != nil {
+		t.Error("Expected successful lock")
+	}
+
+	if lockSuccess(clusterID, monitorClustePrefix, 1) {
+		t.Error("Expected failed lock")
+	}
+
+	if lockSuccess(clusterID, canceledClusterPrefix, 1) {
+		t.Error("Expected failed lock")
+	}
+
+	releaseClusterLock(clusterID)
+	if !lockSuccess(clusterID, monitorClustePrefix, 1) {
+		t.Error("Expected successful lock")
+	}
+
+	err = acquireClusterLock(clusterID, canceledClusterPrefix, 11)
+	if err != nil {
+		t.Error("Expected successful lock")
+	}
+
+	err = acquireClusterLock(clusterID, monitorClustePrefix, 1)
+	if err == nil {
+		t.Error("Expected failed lock")
+	}
+
+	time.Sleep(1 * time.Second)
+	err = acquireClusterLock(clusterID, monitorClustePrefix, 1)
+	if err != nil {
+		t.Error("Expected successful lock")
+	}
+
+	err = acquireClusterLock(clusterID, canceledClusterPrefix, 1)
+	if err != nil {
+		t.Error("Expected successful lock")
+	}
+}
+
 func TestRegisterCluster(t *testing.T) {
 	var client cloud.AwsEnvironment
 	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
@@ -420,6 +465,26 @@ func TestHandleCheckinAppExitStatus(t *testing.T) {
 	}
 
 	DeregisterCluster(client.ClusterID)
+
+	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+
+	HandleCheckIn(client.ClusterID, StatusError, clusterStatus)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusError {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+
+	HandleCheckIn(client.ClusterID, StatusDone, clusterStatus)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusError {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+
+	DeregisterCluster(client.ClusterID)
 }
 
 func TestPendingTimeoutMonitor(t *testing.T) {
@@ -436,7 +501,7 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 
 	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
 
-	Run(1, 9999, 9999, 9999, 5, 9999)
+	Run(1, 9999, 9999, 9999, 5, 9999, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusPending {
 		t.Error("status mismatch")
@@ -444,11 +509,46 @@ func TestPendingTimeoutMonitor(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 9999, 9999, 5, 9999)
+	Run(1, 9999, 9999, 9999, 5, 9999, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusError {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusError)
+		t.Error("-actual: " + status)
+	}
+
+	DeregisterCluster(client.ClusterID)
+}
+
+func TestCanceledTerminationDelayMonitor(t *testing.T) {
+	var client cloud.AwsEnvironment
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+	SetCanceled(client.ClusterID)
+
+	Run(1, 9999, 9999, 9999, 9999, 9999, 5)
+	status := GetLastKnownStatus(client.ClusterID)
+	if status != StatusCanceled {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusCanceled)
+		t.Error("-actual: " + status)
+	}
+
+	time.Sleep(18 * time.Second)
+	Run(1, 9999, 9999, 9999, 9999, 9999, 5)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusNotRegistered {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusNotRegistered)
 		t.Error("-actual: " + status)
 	}
 
@@ -475,7 +575,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 		Status:           StatusIdle,
 	}, true)
 
-	Run(1, 9999, 5, 9999, 9999, 5)
+	Run(1, 9999, 5, 9999, 9999, 5, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusIdle {
 		t.Error("status mismatch")
@@ -483,7 +583,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 5, 9999, 9999, 5)
+	Run(1, 9999, 5, 9999, 9999, 5, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusDone {
 		t.Error("status mismatch")
@@ -491,7 +591,7 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 5, 9999, 9999, 5)
+	Run(1, 9999, 5, 9999, 9999, 5, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusNotRegistered {
 		t.Error("status mismatch")
@@ -520,7 +620,7 @@ func TestMaxRuntime(t *testing.T) {
 		Status:           StatusRunning,
 	}, true)
 
-	Run(1, 5, 9999, 9999, 9999, 9999)
+	Run(1, 5, 9999, 9999, 9999, 9999, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusRunning {
 		t.Error("status mismatch")
@@ -528,7 +628,7 @@ func TestMaxRuntime(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 5, 9999, 9999, 9999, 9999)
+	Run(1, 5, 9999, 9999, 9999, 9999, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusError {
 		t.Error("status mismatch")
@@ -557,7 +657,7 @@ func TestMaxTimeWithoutCheckin(t *testing.T) {
 		Status:           StatusRunning,
 	}, true)
 
-	Run(1, 9999, 9999, 5, 9999, 9999)
+	Run(1, 9999, 9999, 5, 9999, 9999, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusRunning {
 		t.Error("status mismatch")
@@ -565,7 +665,7 @@ func TestMaxTimeWithoutCheckin(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 9999, 5, 9999, 9999)
+	Run(1, 9999, 9999, 5, 9999, 9999, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusError {
 		t.Error("status mismatch")
@@ -594,7 +694,7 @@ func TestDoneReportTime(t *testing.T) {
 		Status:           StatusDone,
 	}, true)
 
-	Run(1, 9999, 9999, 9999, 9999, 5)
+	Run(1, 9999, 9999, 9999, 9999, 5, 9999)
 	status := GetLastKnownStatus(client.ClusterID)
 	if status != StatusDone {
 		t.Error("status mismatch")
@@ -602,7 +702,7 @@ func TestDoneReportTime(t *testing.T) {
 		t.Error("-actual: " + status)
 	}
 
-	Run(1, 9999, 9999, 9999, 9999, 5)
+	Run(1, 9999, 9999, 9999, 9999, 5, 9999)
 	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusNotRegistered {
 		t.Error("status mismatch")

@@ -6,6 +6,7 @@ import (
 	"allspark/logger"
 	"errors"
 	"os"
+	"strconv"
 	"time"
 
 	"allspark/util/serializer"
@@ -20,8 +21,10 @@ const (
 	StatusDone          = "DONE"
 	StatusError         = "ERROR"
 	StatusFinished      = "FINISHED"
+	StatusCanceled      = "CANCELED"
 	statusMap           = "STATUS_MAP"
 	monitorLock         = "MONITOR_LOCK"
+	clusterLockPreifx   = "cluster.lock."
 )
 
 // SparkClusterStatusAtEpoch describes the state of a cluster
@@ -49,6 +52,13 @@ func GetClientData(clusterID string) ([]byte, string, error) {
 func HandleCheckIn(clusterID string, appExitStatus string,
 	clusterStatus cloud.SparkClusterStatus) {
 
+	err := acquireClusterLock(clusterID, "check-in", 5)
+	if err != nil {
+		logger.GetError().Println(err)
+		return
+	}
+	defer releaseClusterLock(clusterID)
+
 	logger.GetInfo().Printf("cluster: %v, app exit status: %v, status: %+v",
 		clusterID, appExitStatus, clusterStatus)
 
@@ -64,6 +74,13 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 	if priorClusterState.Status == StatusNotRegistered {
 		logger.GetInfo().Printf("cluster: %v checked-in, but is not currently"+
 			" registered and likely set for termination",
+			clusterID)
+		return
+	}
+
+	if priorClusterState.Status == StatusCanceled {
+		logger.GetInfo().Printf("cluster: %v checked-in, but is currently"+
+			" set for cancelation",
 			clusterID)
 		return
 	}
@@ -92,6 +109,11 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 
 	if priorClusterState.Status != StatusDone &&
 		priorClusterState.Status != StatusError {
+		setStatus(clusterID, epochStatus, true)
+	}
+
+	if priorClusterState.Status == StatusDone &&
+		reportedStatus == StatusError {
 		setStatus(clusterID, epochStatus, true)
 	}
 }
@@ -173,6 +195,46 @@ func GetLastKnownStatus(clusterID string) string {
 	return clusterState.Status
 }
 
+// SetCanceled - Sets the cluster to StatusCanceled so be terminated
+func SetCanceled(clusterID string) error {
+	logger.GetInfo().Printf("handling request to cancel cluster %v ",
+		clusterID)
+	err := acquireClusterLock(clusterID, "canceled", 5)
+	if err != nil {
+		logger.GetError().Println(err)
+		return err
+	}
+	defer releaseClusterLock(clusterID)
+
+	priorClusterState, err := getLastEpoch(clusterID)
+	if err != nil {
+		logger.GetInfo().Printf("cluster: %v appears to have been terminated and deregistered",
+			clusterID)
+		return err
+	}
+
+	if priorClusterState.Status != StatusDone &&
+		priorClusterState.Status != StatusError &&
+		priorClusterState.Status != StatusCanceled &&
+		priorClusterState.Status != StatusNotRegistered {
+
+		epochStatus := SparkClusterStatusAtEpoch{
+			LastCheckIn:      priorClusterState.LastCheckIn,
+			Timestamp:        getTimestamp(),
+			Status:           StatusCanceled,
+			Client:           priorClusterState.Client,
+			CloudEnvironment: priorClusterState.CloudEnvironment,
+		}
+
+		setStatus(clusterID, epochStatus, true)
+	} else {
+		logger.GetInfo().Printf("cluster %v with status %v will not be set to canceled",
+			clusterID, priorClusterState.Status)
+	}
+
+	return nil
+}
+
 func setStatus(clusterID string, status SparkClusterStatusAtEpoch, overwrite bool) bool {
 	logger.GetInfo().Printf("setting status %s, status: %+v", clusterID, status.Status)
 	client := datastore.GetRedisClient()
@@ -194,23 +256,26 @@ func setStatus(clusterID string, status SparkClusterStatusAtEpoch, overwrite boo
 // monitor will run for the specified number of iterations, or indefinitely
 // if iterations <= 0.
 func Run(iterations int, maxRuntime int64, idleTimeout int64,
-	maxTimeWithoutCheckin int64, pendingTimeout int64, doneReportTime int64) {
+	maxTimeWithoutCheckin int64, pendingTimeout int64,
+	doneReportTime int64, cancelTerminationDelay int64) {
 
 	if iterations <= 0 {
 		for {
-			if acquireLock() {
+			if acquireMonitorLock() {
 				logger.GetDebug().Println("acquired lock")
 				monitorClusterHelper(maxRuntime, idleTimeout,
-					maxTimeWithoutCheckin, pendingTimeout, doneReportTime)
+					maxTimeWithoutCheckin, pendingTimeout,
+					doneReportTime, cancelTerminationDelay)
 				releaseLock()
 			}
 			time.Sleep(10 * time.Second)
 		}
 	}
 	for i := 0; i < iterations; i++ {
-		if acquireLock() {
+		if acquireMonitorLock() {
 			monitorClusterHelper(maxRuntime, idleTimeout,
-				maxTimeWithoutCheckin, pendingTimeout, doneReportTime)
+				maxTimeWithoutCheckin, pendingTimeout,
+				doneReportTime, cancelTerminationDelay)
 			releaseLock()
 		}
 		time.Sleep(10 * time.Second)
@@ -225,12 +290,19 @@ func terminateCluster(client cloud.CloudEnvironment) {
 }
 
 func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
-	maxTimeWithoutCheckin int64, pendingTimeout int64, doneReportTime int64) {
+	maxTimeWithoutCheckin int64, pendingTimeout int64,
+	doneReportTime int64, cancelTerminationDelay int64) {
 
 	redisClient := datastore.GetRedisClient()
 	defer redisClient.Close()
 
 	for clusterID, buffer := range redisClient.HGetAll(statusMap).Val() {
+		err := acquireClusterLock(clusterID, "canceled", 5)
+		if err != nil {
+			logger.GetError().Println(err)
+			continue
+		}
+
 		var status SparkClusterStatusAtEpoch
 		serializer.Deserialize([]byte(buffer), &status)
 
@@ -301,6 +373,14 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						DeregisterCluster(clusterID)
 					}
 					break
+				case StatusCanceled:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
+						status.Status, clusterID)
+					if currentTime-status.Timestamp > cancelTerminationDelay {
+						terminateCluster(client)
+						DeregisterCluster(clusterID)
+					}
+					break
 				default:
 					logger.GetInfo().Printf("monitor reported no status for cluster %s",
 						clusterID)
@@ -308,6 +388,7 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				}
 			}
 		}
+		releaseClusterLock(clusterID)
 	}
 }
 
@@ -318,7 +399,7 @@ func releaseLock() {
 	redisClient.Del(monitorLock)
 }
 
-func acquireLock() bool {
+func acquireMonitorLock() bool {
 	redisClient := datastore.GetRedisClient()
 	defer redisClient.Close()
 
@@ -330,6 +411,34 @@ func acquireLock() bool {
 
 	redisClient.SetNX(monitorLock, id, 15*time.Minute).Val()
 	return id == redisClient.Get(monitorLock).Val()
+}
+
+func lockSuccess(clusterID string, prefix string, lockExpiration time.Duration) bool {
+	redisClient := datastore.GetRedisClient()
+	defer redisClient.Close()
+	key := clusterLockPreifx + clusterID
+	value := prefix + strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	return redisClient.SetNX(key, value, lockExpiration*time.Second).Val()
+}
+
+func releaseClusterLock(clusterID string) {
+	redisClient := datastore.GetRedisClient()
+	defer redisClient.Close()
+	key := clusterLockPreifx + clusterID
+	redisClient.Del(key)
+}
+
+func acquireClusterLock(clusterID string, lockID string, lockExpiration time.Duration) error {
+	maxAttempts := 10
+	for i := 0; i < maxAttempts; i++ {
+		if lockSuccess(clusterID, lockID, lockExpiration) {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return errors.New("failed to acquire lock for cluster " +
+		clusterID + ", lockID " + lockID)
 }
 
 func getTimestamp() int64 {

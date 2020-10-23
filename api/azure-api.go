@@ -88,8 +88,8 @@ func createClusterAzure(w http.ResponseWriter, r *http.Request) {
 
 	_, err = client.CreateCluster()
 	if err != nil {
+		monitor.SetCanceled(client.ClusterID)
 		logger.GetError().Println(err.Error())
-		monitor.DeregisterCluster(client.ClusterID)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return

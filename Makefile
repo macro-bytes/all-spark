@@ -18,9 +18,10 @@ run_tests: clean setup_docker_network allspark_cli allspark_daemon
 	go test -timeout 1200s -count=1 -v ./util/serializer && \
 	go test -timeout 1200s -count=1 -v ./datastore && \
     python3 dist/docker-setup/allspark-compute/test_run_monitor.py && \
-    docker rm -f dev-spark-cluster
+	docker rm -f /dev-spark-cluster || true
 
 clean:
-	docker network rm allspark_bridged_newtork || true && \
-	rm -f allspark_cli allspark_daemon && /allspark/app_exit_status && \
-	docker rm -f dev-spark-cluster || true
+	redis-cli flushall; \
+	docker network rm allspark_bridged_newtork 2>/dev/null; \
+	rm -f allspark_cli allspark_daemon /allspark/exit_status; \
+	docker rm -f /dev-spark-cluster 2>/dev/null || true
