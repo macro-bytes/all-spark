@@ -22,20 +22,18 @@ function wait_for_spark_cluster {
 
 function write_to_host_buffer {
     IP=`hostname -I | awk '{ print $1 }'`
-    echo "$IP $HOSTNAME" >>/shared/host_buffer.txt
+    echo "$IP $HOSTNAME" >>/shared/host_buffer_$HOSTNAME.txt
 }
 
 function wait_for_host_buffer {
     while true; do
-        if [ -e /shared/host_buffer.txt ]; then
-            EXPECTED_HOSTS=$(($EXPECTED_WORKERS + 1))
-            LINE_COUNT=`wc -l /shared/host_buffer.txt | awk '{print $1}'`
+        EXPECTED_HOSTS=$(($EXPECTED_WORKERS + 1))
+        LINE_COUNT=`ls -l /shared | grep host_buffer_ | wc -l | awk '{print $1}'`
 
-            if [ "$LINE_COUNT" == "$EXPECTED_HOSTS" ]; then
-                cat /shared/host_buffer.txt > /shared/resolve.txt
-                cat /shared/resolve.txt >> /etc/hosts
-                break
-            fi
+        if [ "$LINE_COUNT" == "$EXPECTED_HOSTS" ]; then
+            cat /shared/host_buffer_*.txt > /shared/resolve.txt
+            cat /shared/resolve.txt >> /etc/hosts
+            break
         fi
         sleep 1
     done

@@ -21,12 +21,18 @@ function set_env_variables {
 
 function mount_shared_volume {
     if [ ! -z $MASTER_IP ]; then
-        mount $MASTER_IP:/shared /shared
+        systemctl stop nfs-server
+        while true; do
+            mount $MASTER_IP:/shared /shared
+            if [ $? == "0" ]; then
+                break
+            fi
+        done
     fi
 }
 
 function run_allspark_image {
-    DNS=`cat /etc/resolv.conf | grep nameserver | awk '{print $2}' | sed 1q`
+    DNS="1.1.1.1"
 	cp /allspark/env.sh /allspark/docker_env.sh
 	sed -i 's/"//g' /allspark/docker_env.sh
     docker run --dns $DNS -d --log-driver syslog --ulimit nofile=122880:122880 --env-file /allspark/docker_env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
