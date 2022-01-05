@@ -25,6 +25,12 @@ func getClient(t *testing.T) CloudEnvironment {
 	return cloud
 }
 
+func TestGetDisks(t *testing.T) {
+}
+
+func TestGetNics(t *testing.T) {
+}
+
 func TestGetPrimaryStorageKey(t *testing.T) {
 	client := getClient(t)
 	azureClient := client.(*AzureEnvironment)

@@ -22,6 +22,7 @@ const (
 	StatusError         = "ERROR"
 	StatusFinished      = "FINISHED"
 	StatusCanceled      = "CANCELED"
+	StatusTerminating   = "TERMINATING"
 	statusMap           = "STATUS_MAP"
 	monitorLock         = "MONITOR_LOCK"
 	clusterLockPreifx   = "cluster.lock."
@@ -324,7 +325,6 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				status.Status = StatusError
 				status.Timestamp = getTimestamp()
 				setStatus(clusterID, status, true)
-				terminateCluster(client)
 			} else {
 				switch status.Status {
 				case StatusPending:
@@ -337,7 +337,6 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status = StatusError
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
-						terminateCluster(client)
 					}
 					break
 				case StatusIdle:
@@ -350,7 +349,6 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status = StatusDone
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
-						terminateCluster(client)
 					}
 					break
 				case StatusRunning:
@@ -362,7 +360,6 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status = StatusError
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
-						terminateCluster(client)
 					}
 					break
 				case StatusDone, StatusError:
@@ -370,7 +367,9 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > doneReportTime {
 						terminateCluster(client)
-						DeregisterCluster(clusterID)
+						status.Status = StatusTerminating
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
 					}
 					break
 				case StatusCanceled:
@@ -378,6 +377,15 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > cancelTerminationDelay {
 						terminateCluster(client)
+						status.Status = StatusTerminating
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
+					}
+					break
+				case StatusTerminating:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
+						status.Status, clusterID)
+					if client.DestructionConfirmed() {
 						DeregisterCluster(clusterID)
 					}
 					break
