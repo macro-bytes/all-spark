@@ -24,7 +24,7 @@ func validateAzureTemplate(template cloud.AzureEnvironment) error {
 		len(template.ImageStorageAccount) == 0 ||
 		len(template.ImageContainer) == 0 ||
 		len(template.ImageBlob) == 0 ||
-		template.WorkerNodes < 2 {
+		template.WorkerNodes < 0 {
 		return errors.New("invalid template object")
 	}
 
@@ -41,8 +41,6 @@ func validateAzureFormBody(r *http.Request) (*cloud.AzureEnvironment, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	logger.GetInfo().Printf("Form body: %s", buffer)
 
 	var template cloud.AzureEnvironment
 	err = serializer.Deserialize(buffer, &template)
@@ -77,6 +75,8 @@ func createClusterAzure(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.GetError().Println(err)
 	}
+
+	logger.GetInfo().Println("http-request: /azure/create, clusterID: " + client.ClusterID)
 
 	err = monitor.RegisterCluster(client.ClusterID, cloud.Azure, serializedClient)
 	if err != nil {

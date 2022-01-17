@@ -1,6 +1,6 @@
 module allspark
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Azure/azure-sdk-for-go v43.3.0+incompatible

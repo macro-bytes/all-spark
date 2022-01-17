@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	awsTemplatePath = "../dist/sample_templates/aws.json"
+	awsClusterTemplatePath    = "../dist/sample_templates/aws.json"
+	awsSingleNodeTemplatePath = "../dist/sample_templates/aws_single_node.json"
 )
 
-func getAwsClient(t *testing.T) CloudEnvironment {
-	templateConfig, err := ReadTemplateConfiguration(awsTemplatePath)
+func getAwsClient(t *testing.T, templatePath string) CloudEnvironment {
+	templateConfig, err := ReadTemplateConfiguration(templatePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +30,7 @@ func getAwsClient(t *testing.T) CloudEnvironment {
 func TestResolveAMI(t *testing.T) {
 	var spec AwsEnvironment
 
-	err := serializer.DeserializePath(awsTemplatePath, &spec)
+	err := serializer.DeserializePath(awsClusterTemplatePath, &spec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,11 +80,11 @@ func TestResolveAMI(t *testing.T) {
 	}
 }
 
-func TestCreateAwsCluster(t *testing.T) {
-	cloud := getAwsClient(t)
+func TestCreateAndDestroyAwsCluster(t *testing.T) {
+	cloud := getAwsClient(t, awsClusterTemplatePath)
 	var spec AwsEnvironment
 
-	err := serializer.DeserializePath(awsTemplatePath, &spec)
+	err := serializer.DeserializePath(awsClusterTemplatePath, &spec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,22 +110,88 @@ func TestCreateAwsCluster(t *testing.T) {
 		t.Error("- got " + strconv.FormatInt(actualNodeCount, 10) +
 			" spark nodes.")
 	}
+
+	if cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned true; expected false")
+	}
+
+	cloud.DestroyCluster()
+	if cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned true; expected false")
+	}
+
+	time.Sleep(5 * time.Minute)
+	if !cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned false; expected true")
+	}
+
+	clusterNodes, err = cloud.getClusterNodes()
+	if err != nil {
+		t.Error(err)
+	}
+
+	actualNodeCount = int64(len(clusterNodes))
+
+	if 0 != actualNodeCount {
+		t.Error("- expected 0 spark nodes.")
+		t.Error("- got " + strconv.Itoa(int(actualNodeCount)) + " spark nodes.")
+	}
 }
 
-func TestDestroyAwsCluster(t *testing.T) {
-	cloud := getAwsClient(t)
-	cloud.DestroyCluster()
-	time.Sleep(5 * time.Minute)
+func TestDestroyAndDestroySingleNodeAwsCluster(t *testing.T) {
+	cloud := getAwsClient(t, awsSingleNodeTemplatePath)
+	var spec AwsEnvironment
+
+	err := serializer.DeserializePath(awsSingleNodeTemplatePath, &spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = cloud.CreateCluster()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	time.Sleep(1 * time.Minute)
 
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Error(err)
 	}
 
-	actualNodeCount := len(clusterNodes)
+	expectedNodeCount := spec.WorkerNodes + 1
+	actualNodeCount := int64(len(clusterNodes))
+
+	if expectedNodeCount != actualNodeCount {
+		t.Error("- expected " + strconv.FormatInt(expectedNodeCount, 10) +
+			" spark nodes.")
+		t.Error("- got " + strconv.FormatInt(actualNodeCount, 10) +
+			" spark nodes.")
+	}
+
+	if cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned true; expected false")
+	}
+
+	cloud.DestroyCluster()
+	if cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned true; expected false")
+	}
+
+	time.Sleep(5 * time.Minute)
+	if !cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned false; expected true")
+	}
+
+	clusterNodes, err = cloud.getClusterNodes()
+	if err != nil {
+		t.Error(err)
+	}
+
+	actualNodeCount = int64(len(clusterNodes))
 
 	if 0 != actualNodeCount {
 		t.Error("- expected 0 spark nodes.")
-		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
+		t.Error("- got " + strconv.Itoa(int(actualNodeCount)) + " spark nodes.")
 	}
 }

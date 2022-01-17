@@ -546,13 +546,19 @@ func TestCanceledTerminationDelayMonitor(t *testing.T) {
 	time.Sleep(18 * time.Second)
 	Run(1, 9999, 9999, 9999, 9999, 9999, 5)
 	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusTerminating {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusTerminating)
+		t.Error("-actual: " + status)
+	}
+
+	Run(1, 9999, 9999, 9999, 9999, 9999, 5)
+	status = GetLastKnownStatus(client.ClusterID)
 	if status != StatusNotRegistered {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusNotRegistered)
 		t.Error("-actual: " + status)
 	}
-
-	DeregisterCluster(client.ClusterID)
 }
 
 func TestIdleTimeoutMonitor(t *testing.T) {
@@ -588,6 +594,14 @@ func TestIdleTimeoutMonitor(t *testing.T) {
 	if status != StatusDone {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusDone)
+		t.Error("-actual: " + status)
+	}
+
+	Run(1, 9999, 5, 9999, 9999, 5, 9999)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusTerminating {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusTerminating)
 		t.Error("-actual: " + status)
 	}
 
@@ -699,6 +713,14 @@ func TestDoneReportTime(t *testing.T) {
 	if status != StatusDone {
 		t.Error("status mismatch")
 		t.Error("-expected: " + StatusDone)
+		t.Error("-actual: " + status)
+	}
+
+	Run(1, 9999, 9999, 9999, 9999, 5, 9999)
+	status = GetLastKnownStatus(client.ClusterID)
+	if status != StatusTerminating {
+		t.Error("status mismatch")
+		t.Error("-expected: " + StatusTerminating)
 		t.Error("-actual: " + status)
 	}
 

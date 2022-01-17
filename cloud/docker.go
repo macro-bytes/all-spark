@@ -105,6 +105,21 @@ func (e *DockerEnvironment) DestroyCluster() error {
 	return nil
 }
 
+// DestructionConfirmed - returns true if the cluster has been terminated; false otherwise
+func (e *DockerEnvironment) DestructionConfirmed() bool {
+	cli := e.getDockerClient()
+	defer cli.Close()
+
+	clusterNodes, err := e.getClusterNodes()
+	if err != nil {
+		logger.GetError().Println(err)
+		logger.GetError().Printf("unable to confirm destruction of cluster %v", e.ClusterID)
+		return false
+	}
+
+	return len(clusterNodes) == 0
+}
+
 func (e *DockerEnvironment) getClusterNodes() ([]string, error) {
 	cli := e.getDockerClient()
 	defer cli.Close()

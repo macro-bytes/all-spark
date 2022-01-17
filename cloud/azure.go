@@ -414,7 +414,11 @@ func (e *AzureEnvironment) CreateCluster() (string, error) {
 		return "", err
 	}
 
-	return "", e.launchWorkers(masterIP)
+	if e.WorkerNodes > 0 {
+		return "", e.launchWorkers(masterIP)
+	}
+
+	return "", err
 }
 
 // DestroyCluster - destroys spark clusters
@@ -429,6 +433,76 @@ func (e *AzureEnvironment) DestroyCluster() error {
 	}
 
 	return nil
+}
+
+// DestructionConfirmed - returns true if the cluster has been terminated; false otherwise
+func (e *AzureEnvironment) DestructionConfirmed() bool {
+	vms, err := e.getClusterNodes()
+	if err != nil {
+		logger.GetError().Println(err)
+		logger.GetError().Printf("unable to confirm destruction of cluster %v; failed to retrieve vms", e.ClusterID)
+		return false
+	}
+
+	disks, err := e.getDisks()
+	if err != nil {
+		logger.GetError().Println(err)
+		logger.GetError().Printf("unable to confirm destruction of cluster %v; failed to retrieve disks", e.ClusterID)
+		return false
+	}
+
+	nics, err := e.getNics()
+	if err != nil {
+		logger.GetError().Println(err)
+		logger.GetError().Printf("unable to confirm destruction of cluster %v; failed to retrieve nics", e.ClusterID)
+		return false
+	}
+
+	return (len(disks) == 0) && (len(nics) == 0) && (len(vms) == 0)
+}
+
+func (e *AzureEnvironment) getNics() ([]string, error) {
+	cli, err := e.getNicClient()
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := cli.List(context.Background(), e.ResourceGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]string, 0)
+
+	for _, el := range result.Values() {
+		if strings.Contains(*el.Name, e.ClusterID) {
+			items = append(items, *el.Name)
+		}
+	}
+
+	return items, err
+}
+
+func (e *AzureEnvironment) getDisks() ([]string, error) {
+	cli, err := e.getDiskClient()
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := cli.List(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]string, 0)
+
+	for _, el := range result.Values() {
+		if strings.Contains(*el.Name, e.ClusterID) {
+			items = append(items, *el.Name)
+		}
+	}
+
+	return items, err
 }
 
 func (e *AzureEnvironment) getClusterNodes() ([]string, error) {

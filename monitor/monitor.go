@@ -22,6 +22,7 @@ const (
 	StatusError         = "ERROR"
 	StatusFinished      = "FINISHED"
 	StatusCanceled      = "CANCELED"
+	StatusTerminating   = "TERMINATING"
 	statusMap           = "STATUS_MAP"
 	monitorLock         = "MONITOR_LOCK"
 	clusterLockPreifx   = "cluster.lock."
@@ -121,8 +122,8 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 // RegisterCluster - registers newly created spark
 // cluster with a pending status
 func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient []byte) error {
-	logger.GetInfo().Printf("registering cluster: %s, %s, %s",
-		clusterID, cloudEnvironment, serializedClient)
+	logger.GetInfo().Printf("registering cluster: %s, %s",
+		clusterID, cloudEnvironment)
 
 	success := setStatus(clusterID, SparkClusterStatusAtEpoch{
 		Status:           StatusPending,
@@ -324,7 +325,12 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				status.Status = StatusError
 				status.Timestamp = getTimestamp()
 				setStatus(clusterID, status, true)
-				terminateCluster(client)
+			} else if currentTime-status.Timestamp > maxRuntime {
+				logger.GetError().Printf("max run-time exceeded for cluster %s; terminating",
+					clusterID)
+				status.Status = StatusError
+				status.Timestamp = getTimestamp()
+				setStatus(clusterID, status, true)
 			} else {
 				switch status.Status {
 				case StatusPending:
@@ -337,7 +343,6 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status = StatusError
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
-						terminateCluster(client)
 					}
 					break
 				case StatusIdle:
@@ -350,27 +355,20 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status = StatusDone
 						status.Timestamp = getTimestamp()
 						setStatus(clusterID, status, true)
-						terminateCluster(client)
 					}
 					break
 				case StatusRunning:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
-					if currentTime-status.Timestamp > maxRuntime {
-						logger.GetError().Printf("max run-time exceeded for cluster %s; terminating",
-							clusterID)
-						status.Status = StatusError
-						status.Timestamp = getTimestamp()
-						setStatus(clusterID, status, true)
-						terminateCluster(client)
-					}
 					break
 				case StatusDone, StatusError:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > doneReportTime {
 						terminateCluster(client)
-						DeregisterCluster(clusterID)
+						status.Status = StatusTerminating
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
 					}
 					break
 				case StatusCanceled:
@@ -378,6 +376,15 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 						status.Status, clusterID)
 					if currentTime-status.Timestamp > cancelTerminationDelay {
 						terminateCluster(client)
+						status.Status = StatusTerminating
+						status.Timestamp = getTimestamp()
+						setStatus(clusterID, status, true)
+					}
+					break
+				case StatusTerminating:
+					logger.GetInfo().Printf("monitor reported %s for cluster %s",
+						status.Status, clusterID)
+					if client.DestructionConfirmed() {
 						DeregisterCluster(clusterID)
 					}
 					break

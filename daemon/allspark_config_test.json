@@ -1,0 +1,24 @@
+{
+    "RedisHost":
+        "localhost:6380",
+    "ClusterPendingTimeout":
+        600,
+    "ClusterIdleTimeout":
+        600,
+    "DoneReportTime":
+        600,
+    "ClusterMaxRuntime":
+        3600,
+    "ClusterMaxTimeWithoutCheckin":
+        120,
+    "CancelTerminationDelay":
+        120,
+    "DockerEnabled":
+        true,
+    "AzureEnabled":
+        true,
+    "AwsEnabled":
+        true,
+    "CallbackURL":
+        "http://localhost:32418/check-in"
+}

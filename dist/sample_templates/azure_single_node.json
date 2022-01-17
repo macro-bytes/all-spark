@@ -1,5 +1,5 @@
 {
-    "ClusterID": "allspark-test",
+    "ClusterID": "azure-single-node",
     "SubscriptionID": "subscription-id",
     "Region": "East US",
     "ClientID": "application-id",
@@ -13,7 +13,7 @@
     "DataStorageAccount": "data-storage-account",
     "ImageContainer": "allspark",
     "ImageBlob": "allspark-compute.vhd",
-    "WorkerNodes": 2,
+    "WorkerNodes": 0,
     "EnvParams": [
         "ACCOUNT_TYPE=azure"
     ]

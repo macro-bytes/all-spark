@@ -228,7 +228,11 @@ func (e *AwsEnvironment) CreateCluster() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = e.launchWorkers(privateIP)
+
+	if e.WorkerNodes > 0 {
+		_, err = e.launchWorkers(privateIP)
+	}
+
 	return "", err
 }
 
@@ -254,6 +258,18 @@ func (e *AwsEnvironment) DestroyCluster() error {
 	return err
 }
 
+// DestructionConfirmed - returns true if the cluster has been terminated; false otherwise
+func (e *AwsEnvironment) DestructionConfirmed() bool {
+	instances, err := e.getClusterNodes()
+	if err != nil {
+		logger.GetError().Println(err)
+		logger.GetError().Printf("unable to confirm destruction of cluster %v", e.ClusterID)
+		return false
+	}
+
+	return len(instances) == 0
+}
+
 func (e *AwsEnvironment) getClusterNodes() ([]string, error) {
 	var instances []string
 
@@ -270,8 +286,9 @@ func (e *AwsEnvironment) getClusterNodes() ([]string, error) {
 					Values: aws.StringSlice([]string{e.SubnetID}),
 				},
 				{
-					Name:   aws.String("instance-state-name"),
-					Values: aws.StringSlice([]string{"running", "pending"}),
+					Name: aws.String("instance-state-name"),
+					Values: aws.StringSlice([]string{"running", "pending",
+						"shutting-down", "stopping", "stopped"}),
 				},
 			},
 		},

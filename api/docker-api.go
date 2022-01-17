@@ -14,7 +14,7 @@ func validateDockerTemplate(template cloud.DockerEnvironment) error {
 	if len(template.ClusterID) == 0 ||
 		template.MemBytes < 10 ||
 		template.NanoCpus < 10 ||
-		template.WorkerNodes < 2 ||
+		template.WorkerNodes < 0 ||
 		len(template.Image) == 0 {
 		return errors.New("invalid template object")
 	}

@@ -80,6 +80,7 @@ const (
 type CloudEnvironment interface {
 	CreateCluster() (string, error)
 	DestroyCluster() error
+	DestructionConfirmed() bool
 	getClusterNodes() ([]string, error)
 }
 
