@@ -19,7 +19,7 @@ func validateAwsTemplate(template cloud.AwsEnvironment) error {
 		len(template.Region) == 0 ||
 		len(template.SecurityGroupIds) == 0 ||
 		len(template.SubnetID) == 0 ||
-		template.WorkerNodes < 2 {
+		template.WorkerNodes < 0 {
 		return errors.New("invalid template object")
 	}
 

@@ -1,0 +1,44 @@
+#!/bin/bash -ex
+
+export DATA_PATH="/allspark/allspark-orchestrator/dist/vm"
+
+function clean_up {
+    rm -Rf /var/lib/cloud/*
+    rm -Rf /allspark/allspark-orchestrator
+}
+
+function enable_services {
+    systemctl start docker
+    systemctl enable docker
+    systemctl enable awslogsd
+    systemctl enable allspark
+}
+
+function configure_allspark {
+    mkdir /shared
+    chmod 777 /shared
+    setfacl -d -m g::rwx /shared
+
+    mkdir /allspark
+    cd /allspark 
+    git clone https://github.com/macrobytes/allspark-orchestrator.git
+    
+    cp $DATA_PATH/allspark.service /usr/lib/systemd/system
+    cp $DATA_PATH/exports /etc/exports
+    cp $DATA_PATH/aws/init /allspark
+    cp $DATA_PATH/aws/awslogs.conf /etc/awslogs/awslogs.conf
+
+    chmod +x /allspark/init
+}
+
+function install_packages {
+    yum install -y docker \
+        awslogs \
+        git
+}
+
+yum -y update
+install_packages
+configure_allspark
+enable_services
+clean_up

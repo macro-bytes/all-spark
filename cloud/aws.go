@@ -228,7 +228,11 @@ func (e *AwsEnvironment) CreateCluster() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	_, err = e.launchWorkers(privateIP)
+
+	if e.WorkerNodes > 0 {
+		_, err = e.launchWorkers(privateIP)
+	}
+
 	return "", err
 }
 

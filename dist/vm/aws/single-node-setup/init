@@ -1,0 +1,44 @@
+#!/bin/bash -x
+
+function clear_aws_logs {
+        rm -f /var/lib/awslogs/agent-state
+        rm /var/log/awslogs.log
+        rm -Rf /var/log/journal/*
+
+        systemctl restart awslogsd.service
+}
+
+function set_host_name {
+        while true; do
+                /usr/bin/curl -s http://169.254.169.254/latest/meta-data/hostname -o /etc/hostname
+                if [ "$?" == "0" ]; then
+                        break
+                fi
+                sleep 1
+        done
+        /usr/bin/hostname -F /etc/hostname
+        export HOSTNAME=`/usr/bin/hostname`
+}
+
+function set_env_variables {
+        while true; do
+                /usr/bin/curl -s http://169.254.169.254/latest/user-data -o /allspark/env.sh
+                if [ "$?" == "0" ]; then
+                        break
+                fi
+                sleep 1
+        done
+
+        source /allspark/env.sh
+}
+
+
+function run_allspark_image {
+        docker run -d --log-driver journald --ulimit nofile=122880:122880 --env-file /allspark/env.sh --network host --mount type=bind,source=/shared,target=/shared allspark-worker:latest
+        tail -f /dev/null
+}
+
+clear_aws_logs
+set_host_name
+set_env_variables
+run_allspark_image

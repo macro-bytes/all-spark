@@ -122,8 +122,8 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 // RegisterCluster - registers newly created spark
 // cluster with a pending status
 func RegisterCluster(clusterID string, cloudEnvironment string, serializedClient []byte) error {
-	logger.GetInfo().Printf("registering cluster: %s, %s, %s",
-		clusterID, cloudEnvironment, serializedClient)
+	logger.GetInfo().Printf("registering cluster: %s, %s",
+		clusterID, cloudEnvironment)
 
 	success := setStatus(clusterID, SparkClusterStatusAtEpoch{
 		Status:           StatusPending,
@@ -325,6 +325,12 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				status.Status = StatusError
 				status.Timestamp = getTimestamp()
 				setStatus(clusterID, status, true)
+			} else if currentTime-status.Timestamp > maxRuntime {
+				logger.GetError().Printf("max run-time exceeded for cluster %s; terminating",
+					clusterID)
+				status.Status = StatusError
+				status.Timestamp = getTimestamp()
+				setStatus(clusterID, status, true)
 			} else {
 				switch status.Status {
 				case StatusPending:
@@ -354,13 +360,6 @@ func monitorClusterHelper(maxRuntime int64, idleTimeout int64,
 				case StatusRunning:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",
 						status.Status, clusterID)
-					if currentTime-status.Timestamp > maxRuntime {
-						logger.GetError().Printf("max run-time exceeded for cluster %s; terminating",
-							clusterID)
-						status.Status = StatusError
-						status.Timestamp = getTimestamp()
-						setStatus(clusterID, status, true)
-					}
 					break
 				case StatusDone, StatusError:
 					logger.GetInfo().Printf("monitor reported %s for cluster %s",

@@ -2,6 +2,7 @@ package api
 
 import (
 	"allspark/cloud"
+	"allspark/monitor"
 	"allspark/util/serializer"
 	"bytes"
 	"encoding/json"
@@ -180,10 +181,105 @@ func TestHealthCheck(t *testing.T) {
 }
 
 func TestCheckin(t *testing.T) {
-	testHTTPRequest(t, checkIn, "GET", "/checkIn",
+	testHTTPRequest(t, checkIn, "GET", "/check-in",
 		nil, http.StatusBadRequest, false)
-	testHTTPRequest(t, checkIn, "POST", "/checkIn",
+	testHTTPRequest(t, checkIn, "POST", "/check-in",
 		nil, http.StatusBadRequest, false)
+
+	var client cloud.AwsEnvironment
+	err := serializer.DeserializePath("../dist/sample_templates/aws.json", &client)
+	if err != nil {
+		t.Error(err)
+	}
+
+	serlializedClient, err := serializer.Serialize(client)
+	if err != nil {
+		t.Error(err)
+	}
+	client.ClusterID = "local"
+
+	monitor.RegisterCluster(client.ClusterID, cloud.Aws, serlializedClient)
+
+	idle_cluster_state := []byte(`{
+		"ClusterID": "local",
+		"AppExitStatus": "",
+		"Status": {	"url" : "spark://simulated-local-mode-cluster:7077",
+			"workers" : [ ],
+			"aliveworkers" : 0,
+			"cores" : 0,
+			"coresused" : 0,
+			"memory" : 0,
+			"memoryused" : 0,
+			"activeapps" : [ ],
+			"completedapps" : [ ],
+			"activedrivers" : [ ],
+			"completeddrivers" : [ ],
+			"status" : "ALIVE"
+		}
+	}`)
+
+	testHTTPRequest(t, checkIn, "POST", "/check-in",
+		bytes.NewReader(idle_cluster_state), http.StatusOK, false)
+	clusterStatus := monitor.GetLastKnownStatus("local")
+	if clusterStatus != monitor.StatusIdle {
+		t.Error("Expected cluster status " + monitor.StatusIdle + ", got " + clusterStatus)
+	}
+
+	running_cluster_state := []byte(`{
+		"ClusterID": "local",
+		"AppExitStatus": "",
+		"Status": {
+			"url" : "spark://simulated-local-mode-cluster::7077",
+			"workers" : [ ],
+			"aliveworkers" : 0,
+			"cores" : 0,
+			"coresused" : 0,
+			"memory" : 0,
+			"memoryused" : 0,
+			"activeapps" : [ {
+				"id" : "app-0-0000",
+				"starttime" : 0,
+				"name" : "pyspark-shell",
+				"cores" : 0,
+				"user" : "spark-user",
+				"memoryperslave" : 0,
+				"submitdate" : "Thu Jan 13 17:47:31 GMT 2022",
+				"state" : "WAITING",
+				"duration" : 0
+			} ],
+			"completedapps" : [ ],
+			"activedrivers" : [ ],
+			"completeddrivers" : [ ],
+			"status" : "ALIVE"
+		}
+	}`)
+
+	testHTTPRequest(t, checkIn, "POST", "/check-in",
+		bytes.NewReader(running_cluster_state), http.StatusOK, false)
+	clusterStatus = monitor.GetLastKnownStatus("local")
+	if clusterStatus != monitor.StatusRunning {
+		t.Error("Expected cluster status " + monitor.StatusRunning + ", got " + clusterStatus)
+	}
+
+	testHTTPRequest(t, checkIn, "POST", "/check-in",
+		bytes.NewReader(idle_cluster_state), http.StatusOK, false)
+	clusterStatus = monitor.GetLastKnownStatus("local")
+	if clusterStatus != monitor.StatusIdle {
+		t.Error("Expected cluster status " + monitor.StatusIdle + ", got " + clusterStatus)
+	}
+
+	time.Sleep(2 * time.Second)
+	monitor.Run(1, 9999, 1, 9999, 9999, 9999, 9999)
+
+	testHTTPRequest(t, checkIn, "POST", "/check-in",
+		bytes.NewReader(idle_cluster_state), http.StatusOK, false)
+	clusterStatus = monitor.GetLastKnownStatus("local")
+	if clusterStatus != monitor.StatusDone {
+		t.Error("Expected cluster status " + monitor.StatusDone + ", got " + clusterStatus)
+	}
+
+	monitor.DeregisterCluster(client.ClusterID)
+
 }
 
 func TestGetStatus(t *testing.T) {

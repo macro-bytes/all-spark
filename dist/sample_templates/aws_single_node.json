@@ -1,0 +1,25 @@
+{
+    "ClusterID": "aws-spark-single-node",
+    "Image": [
+        {
+            "Name": "image-id",
+            "Values": [
+                "ami-0d8fc38857132600d"
+            ]
+        }
+    ],
+    "InstanceType": "m5.2xlarge",
+    "EBSVolumeSize": 20,
+    "SubnetID": "subnet-0f05559509a1a7971",
+    "SecurityGroupIds": [
+        "sg-0631aa19d85fd7c9b",
+        "sg-0a359f2c2bd058070"
+    ],
+    "WorkerNodes": 0,
+    "Region": "us-west-2",
+    "IAMRole": "AllSpark-CloudWatchLogging",
+    "KeyName": "wp-2",
+    "EnvParams": [
+        "PARAM=VALUE"
+    ]
+}

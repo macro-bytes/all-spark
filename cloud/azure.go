@@ -414,7 +414,11 @@ func (e *AzureEnvironment) CreateCluster() (string, error) {
 		return "", err
 	}
 
-	return "", e.launchWorkers(masterIP)
+	if e.WorkerNodes > 0 {
+		return "", e.launchWorkers(masterIP)
+	}
+
+	return "", err
 }
 
 // DestroyCluster - destroys spark clusters

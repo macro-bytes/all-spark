@@ -7,11 +7,12 @@ import (
 )
 
 const (
-	dockerTemplatePath = "../dist/sample_templates/docker.json"
+	dockerClusterTemplatePath    = "../dist/sample_templates/docker.json"
+	dockerSingleNodeTemplatePath = "../dist/sample_templates/docker_single_node.json"
 )
 
-func getDockerClient(t *testing.T) CloudEnvironment {
-	templateConfig, err := ReadTemplateConfiguration(dockerTemplatePath)
+func getDockerClient(t *testing.T, templatePath string) CloudEnvironment {
+	templateConfig, err := ReadTemplateConfiguration(templatePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,11 +25,11 @@ func getDockerClient(t *testing.T) CloudEnvironment {
 	return cloud
 }
 
-func TestCreateDockerCluster(t *testing.T) {
-	cloud := getDockerClient(t)
+func TestCreateAndDestroyDockerCluster(t *testing.T) {
+	cloud := getDockerClient(t, dockerClusterTemplatePath)
 	var spec DockerEnvironment
 
-	err := serializer.DeserializePath(dockerTemplatePath, &spec)
+	err := serializer.DeserializePath(dockerClusterTemplatePath, &spec)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,18 +56,76 @@ func TestCreateDockerCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	if cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned true; expected false")
+	}
+	cloud.DestroyCluster()
+
+	if !cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned false; expected true")
+	}
+
+	clusterNodes, err = cloud.getClusterNodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualNodeCount = len(clusterNodes)
+
+	if 0 != actualNodeCount {
+		t.Error("- expected 0 spark nodes.")
+		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
+	}
 }
 
-func TestDestroyDockerCluster(t *testing.T) {
-	cloud := getDockerClient(t)
-	cloud.DestroyCluster()
+func TestCreateAndDestroySingleNodeDockerCluster(t *testing.T) {
+	cloud := getDockerClient(t, dockerSingleNodeTemplatePath)
+	var spec DockerEnvironment
+
+	err := serializer.DeserializePath(dockerSingleNodeTemplatePath, &spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	webURL, err := cloud.CreateCluster()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	clusterNodes, err := cloud.getClusterNodes()
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	expectedNodeCount := spec.WorkerNodes + 1
 	actualNodeCount := len(clusterNodes)
+
+	if expectedNodeCount != actualNodeCount {
+		t.Error("- expected " + strconv.Itoa(expectedNodeCount) + " spark nodes.")
+		t.Error("- got " + strconv.Itoa(actualNodeCount) + " spark nodes.")
+	}
+
+	err = waitForCluster(webURL, spec.WorkerNodes, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned true; expected false")
+	}
+	cloud.DestroyCluster()
+
+	if !cloud.DestructionConfirmed() {
+		t.Error("DestructionConfirmed returned false; expected true")
+	}
+
+	clusterNodes, err = cloud.getClusterNodes()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actualNodeCount = len(clusterNodes)
 
 	if 0 != actualNodeCount {
 		t.Error("- expected 0 spark nodes.")
