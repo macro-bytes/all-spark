@@ -1,0 +1,7 @@
+#!/bin/bash
+
+/allspark/run_monitor.py &
+/allspark/run
+
+tail -f /dev/null
+

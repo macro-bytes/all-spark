@@ -87,7 +87,7 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 	}
 
 	var timestamp int64
-	reportedStatus := getReportedStatus(appExitStatus, clusterStatus)
+	reportedStatus := resolveClusterStatus(appExitStatus, clusterStatus, priorClusterState.Status)
 	if reportedStatus == StatusError {
 		logger.GetError().Printf("cluster: %v reported status: %+v", clusterID, StatusError)
 	} else {
@@ -109,7 +109,8 @@ func HandleCheckIn(clusterID string, appExitStatus string,
 	}
 
 	if priorClusterState.Status != StatusDone &&
-		priorClusterState.Status != StatusError {
+		priorClusterState.Status != StatusError &&
+		priorClusterState.Status != StatusTerminating {
 		setStatus(clusterID, epochStatus, true)
 	}
 
@@ -150,7 +151,7 @@ func DeregisterCluster(clusterID string) {
 	client.HDel(statusMap, clusterID)
 }
 
-func getReportedStatus(appExitStatus string, status cloud.SparkClusterStatus) string {
+func resolveClusterStatus(appExitStatus string, status cloud.SparkClusterStatus, priorStatus string) string {
 	if len(appExitStatus) > 0 {
 		// currently all appExitStates with length > 0 are assumed to be error states
 		return StatusError
@@ -163,8 +164,10 @@ func getReportedStatus(appExitStatus string, status cloud.SparkClusterStatus) st
 			return StatusError
 		}
 		return StatusDone
+	} else if (priorStatus == StatusRunning) && len(status.ActiveApps) == 0 {
+		// cluster has gone from running to idle; assume status done
+		return StatusDone
 	}
-
 	return StatusIdle
 }
 

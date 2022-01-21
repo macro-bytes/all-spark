@@ -264,22 +264,11 @@ func TestCheckin(t *testing.T) {
 	testHTTPRequest(t, checkIn, "POST", "/check-in",
 		bytes.NewReader(idle_cluster_state), http.StatusOK, false)
 	clusterStatus = monitor.GetLastKnownStatus("local")
-	if clusterStatus != monitor.StatusIdle {
-		t.Error("Expected cluster status " + monitor.StatusIdle + ", got " + clusterStatus)
-	}
-
-	time.Sleep(2 * time.Second)
-	monitor.Run(1, 9999, 1, 9999, 9999, 9999, 9999)
-
-	testHTTPRequest(t, checkIn, "POST", "/check-in",
-		bytes.NewReader(idle_cluster_state), http.StatusOK, false)
-	clusterStatus = monitor.GetLastKnownStatus("local")
 	if clusterStatus != monitor.StatusDone {
 		t.Error("Expected cluster status " + monitor.StatusDone + ", got " + clusterStatus)
 	}
 
 	monitor.DeregisterCluster(client.ClusterID)
-
 }
 
 func TestGetStatus(t *testing.T) {
