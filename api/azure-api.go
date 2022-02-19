@@ -24,6 +24,7 @@ func validateAzureTemplate(template cloud.AzureEnvironment) error {
 		len(template.ImageStorageAccount) == 0 ||
 		len(template.ImageContainer) == 0 ||
 		len(template.ImageBlob) == 0 ||
+		template.DiskSizeGB < 30 ||
 		template.WorkerNodes < 0 {
 		return errors.New("invalid template object")
 	}

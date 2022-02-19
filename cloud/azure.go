@@ -29,6 +29,7 @@ type AzureEnvironment struct {
 	VMNet               string
 	VMSubnet            string
 	VMSize              compute.VirtualMachineSizeTypes
+	DiskSizeGB          int32
 	ImageStorageAccount string
 	DataStorageAccount  string
 	ImageContainer      string
@@ -197,7 +198,7 @@ func (e *AzureEnvironment) createDisk(name string) (string, error) {
 		Location: to.StringPtr(e.Region),
 		Name:     to.StringPtr(name),
 		DiskProperties: &compute.DiskProperties{
-			DiskSizeGB: to.Int32Ptr(32),
+			DiskSizeGB: to.Int32Ptr(e.DiskSizeGB + 1),
 			CreationData: &compute.CreationData{
 				CreateOption:     compute.Import,
 				SourceURI:        to.StringPtr(e.getImageURI()),
