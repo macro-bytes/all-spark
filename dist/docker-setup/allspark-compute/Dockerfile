@@ -27,6 +27,7 @@ RUN apt-get update && \
         unzip && \
     ln -s /usr/bin/python3.7 /usr/bin/python && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 1 && \
+    pip3 install --upgrade pip && \
     pip3 install -r requirements.txt && \
     rm requirements.txt && \
     wget https://archive.apache.org/dist/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz && \
