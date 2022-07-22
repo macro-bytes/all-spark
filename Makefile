@@ -24,10 +24,13 @@ run_tests: clean pull_required_images setup_docker_network allspark_cli allspark
 pull_required_images:
 	docker pull macrobytes/dev-spark-cluster:latest && \
 	docker pull macrobytes/allspark-compute:latest
-     
+
 clean:
 	rm /tmp/allspark_exit_status; \
 	redis-cli flushall; \
 	docker network rm allspark_bridged_newtork 2>/dev/null; \
 	rm -f allspark_cli allspark_daemon /allspark/exit_status; \
 	docker rm -f /dev-spark-cluster 2>/dev/null || true
+
+build_orchestrator_image:
+	docker build -t macrobytes/allspark-orchestration-service -f dist/docker-setup/allspark-orchestration-service/Dockerfile .
